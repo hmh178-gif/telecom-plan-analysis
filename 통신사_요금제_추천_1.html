@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>통신사·요금제 맞춤 추천</title>
+<style>
+  @font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2/PretendardVariable.woff2') format('woff2-variations');
+    font-weight: 100 900;
+  }
+  :root{
+    --skt:#E4002B; --skt-bg:#FDECEE;
+    --lgu:#9C0080; --lgu-bg:#F6E8F4;
+    --kt:#00968F;  --kt-bg:#E4F5F3; --kt-black:#1A1A1A;
+    --ink:#12151A; --ink-soft:#30353B; --ink-muted:#5C6268;
+    --surface:#F3F3F1; --panel:#FFFFFF; --border:#E3E2DE;
+    --accent:#2F5496;
+    --good-bg:#EAF6EC; --good-ink:#146C2E;
+    --warn-bg:#FFF6E5; --warn-ink:#7A4E00;
+    --gold:#B8860B; --silver:#8A8F96; --bronze:#A9713A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Pretendard', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+    background:var(--surface);
+    color:var(--ink);
+    line-height:1.6;
+    padding-bottom:64px;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 20px;}
+  header.hero{padding:44px 20px 28px; max-width:1080px; margin:0 auto;}
+  .eyebrow{font-size:13px; font-weight:800; letter-spacing:.04em; color:var(--ink-muted); text-transform:uppercase; margin-bottom:12px;}
+  h1{font-size:29px; font-weight:900; margin:0 0 10px; letter-spacing:-.015em; color:var(--ink);}
+  .sub{font-size:14.5px; font-weight:500; color:var(--ink-soft); max-width:680px;}
+
+  section{max-width:1080px; margin:0 auto; padding:24px 20px 0;}
+  .panel{background:var(--panel); border:1px solid var(--border); border-radius:18px; padding:26px;}
+  .form-grid{display:grid; grid-template-columns:1.1fr 0.8fr 0.85fr 0.95fr 1fr 1.1fr; gap:14px; align-items:end;}
+  .field{display:flex; flex-direction:column; gap:7px; position:relative;}
+  .field label{font-size:12.5px; font-weight:800; color:var(--ink-soft);}
+  .field input[type=text], .field input[type=number], .field select{
+    font-family:inherit; font-size:14px; font-weight:600; padding:10px 12px; border:1.5px solid var(--border);
+    border-radius:10px; background:#fff; color:var(--ink); width:100%;
+  }
+  .field select{cursor:pointer;}
+  .field input:focus, .field select:focus{outline:2px solid var(--accent); outline-offset:1px;}
+  .unlimited-row{display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-top:2px;}
+  .unlimited-row input{accent-color:var(--ink);}
+  #calcBtn{
+    grid-column:1 / -1; margin-top:6px; padding:14px 20px; border:none; border-radius:12px;
+    background:var(--ink); color:#fff; font-size:15.5px; font-weight:800; cursor:pointer;
+    transition:opacity .15s; letter-spacing:-.01em;
+  }
+  #calcBtn:hover{opacity:.85;}
+
+  /* 예산 스테퍼 */
+  .stepper{display:flex; align-items:stretch; border:1.5px solid var(--border); border-radius:10px; overflow:hidden; background:#fff;}
+  .stepper button{
+    width:36px; border:none; background:#F5F5F3; color:var(--ink); font-size:17px; font-weight:800; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .stepper button:hover{background:#EAEAE7;}
+  .stepper button:active{background:#E0E0DC;}
+  .stepper-val{flex:1; display:flex; align-items:baseline; justify-content:center; gap:3px; font-weight:800; font-size:15px; padding:8px 4px;}
+  .stepper-val .unit{font-size:11.5px; font-weight:700; color:var(--ink-muted);}
+
+  section > h2, section h2{font-size:19.5px; font-weight:900; margin:0 0 14px; color:var(--ink); letter-spacing:-.01em;}
+
+  #resultArea{display:none;}
+  .winner-banner{
+    display:flex; align-items:center; gap:16px; background:linear-gradient(135deg,#12151A,#252A31); color:#fff;
+    border-radius:16px; padding:20px 24px; margin-bottom:22px;
+  }
+  .winner-banner .trophy{font-size:32px; flex:none;}
+  .winner-banner .txt b{font-size:18px; font-weight:900;}
+  .winner-banner .txt .amt{font-size:18px; font-weight:900;}
+  .winner-banner .txt div.detail{font-size:12.5px; font-weight:600; color:rgba(255,255,255,.75); margin-top:4px;}
+
+  /* 총비용 비교 미니 바차트 */
+  .cost-chart{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:20px 22px; margin-bottom:22px;}
+  .cost-chart .cc-title{font-size:13px; font-weight:800; color:var(--ink-muted); margin-bottom:14px;}
+  .cc-row{display:flex; align-items:center; gap:12px; margin:10px 0;}
+  .cc-label{width:64px; flex:none; font-size:13px; font-weight:800; color:var(--ink);}
+  .cc-track{flex:1; background:#EFEFEC; border-radius:8px; height:30px; overflow:hidden;}
+  .cc-fill{height:100%; border-radius:8px; display:flex; align-items:center; justify-content:flex-end; padding-right:10px; transition:width .25s;}
+  .cc-fill span{font-size:12.5px; font-weight:800; color:#fff;}
+
+  .cards-row{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px;}
+  .carrier-card{
+    border-radius:18px; border:1.5px solid var(--border); background:#fff; padding:22px; position:relative;
+    border-top:5px solid transparent;
+  }
+  .carrier-card.best{border-color:var(--ink); box-shadow:0 4px 18px rgba(0,0,0,.08);}
+  .rank-badge{
+    position:absolute; top:-13px; left:20px; font-size:11px; font-weight:900;
+    padding:5px 12px; border-radius:100px; color:#fff; letter-spacing:.01em;
+  }
+  .rank-1{background:var(--ink);}
+  .rank-2{background:var(--silver);}
+  .rank-3{background:var(--bronze);}
+  .carrier-card .cname{font-size:16px; font-weight:900; display:flex; align-items:center; gap:8px; margin:8px 0 16px; color:var(--ink);}
+  .carrier-card .cdot{width:12px; height:12px; border-radius:50%; flex:none;}
+  .carrier-card .na{color:var(--ink-muted); font-size:13.5px; font-weight:600; padding:20px 0;}
+
+  .plan-select-wrap{margin-bottom:14px;}
+  .plan-select-wrap label{display:block; font-size:11px; font-weight:800; color:var(--ink-muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:.03em;}
+  select.plan-select{
+    width:100%; font-family:inherit; font-size:13.5px; font-weight:800; padding:9px 10px;
+    border:1.5px solid var(--border); border-radius:9px; background:#FAFAF8; color:var(--ink); cursor:pointer;
+  }
+  select.plan-select:focus{outline:2px solid var(--accent);}
+  .plan-fee-note{font-size:12px; font-weight:600; color:var(--ink-muted); margin-top:5px;}
+
+  .kv{display:flex; justify-content:space-between; align-items:baseline; font-size:13px; font-weight:600; padding:7px 0; border-bottom:1px dashed var(--border);}
+  .kv:last-of-type{border-bottom:none;}
+  .kv .k{color:var(--ink-muted); font-weight:700;}
+  .kv .v{font-weight:800; text-align:right; color:var(--ink);}
+  .kv .v small{font-weight:600; color:var(--ink-muted); font-size:11px; display:block;}
+
+  .monthly-box{
+    display:flex; justify-content:space-between; align-items:center; margin-top:14px; padding:12px 14px;
+    background:#F6F6F4; border-radius:10px;
+  }
+  .monthly-box .k{font-size:12px; font-weight:800; color:var(--ink-soft);}
+  .monthly-box .v{font-size:19px; font-weight:900; color:var(--ink);}
+
+  .total-cost{margin-top:12px; padding-top:14px; border-top:1.5px solid var(--border);}
+  .total-cost .k{font-size:12.5px; color:var(--ink-muted); font-weight:800;}
+  .total-cost .v{font-size:25px; font-weight:900; margin-top:3px; letter-spacing:-.01em;}
+  .total-cost .method{font-size:12px; font-weight:600; color:var(--ink-soft); margin-top:4px;}
+  .est-flag{font-size:10.5px; font-weight:800; color:#7A4E00; background:#FFF1CC; padding:2px 6px; border-radius:5px; margin-left:5px;}
+
+  .table-scroll{overflow-x:auto; margin-bottom:24px; -webkit-overflow-scrolling:touch;}
+  table.compare{width:100%; min-width:640px; border-collapse:collapse; font-size:13px; font-weight:700; margin-bottom:0;}
+  table.compare th, table.compare td{padding:11px 12px; text-align:right; border-bottom:1px solid var(--border);}
+  table.compare th:first-child, table.compare td:first-child{text-align:left;}
+  table.compare th{background:#F0F0EC; font-size:11.5px; color:var(--ink-muted); text-transform:uppercase; font-weight:800;}
+  table.compare td.hl{font-weight:900; color:var(--good-ink);}
+
+  .reason-box{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:22px 24px; margin-bottom:20px;}
+  .reason-box h3{margin:0 0 10px; font-size:15.5px; font-weight:900; color:var(--ink);}
+  .reason-box ul{margin:0; padding-left:18px;}
+  .reason-box li{font-size:13.5px; font-weight:600; color:var(--ink-soft); margin:7px 0;}
+
+  .limits-box{background:var(--warn-bg); border:1px solid #F0DBA6; border-radius:16px; padding:22px 24px; margin-bottom:8px;}
+  .limits-box h3{margin:0 0 10px; font-size:15.5px; font-weight:900; color:var(--warn-ink);}
+  .limits-box ul{margin:0; padding-left:18px;}
+  .limits-box li{font-size:13px; font-weight:600; color:#5c3c00; margin:7px 0;}
+
+  details.methodology{margin-top:18px; font-size:13px; color:var(--ink-soft);}
+  details.methodology summary{cursor:pointer; font-weight:800; color:var(--ink); padding:4px 0;}
+  details.methodology .m-body{padding:10px 2px 4px;}
+  details.methodology ol{padding-left:18px;}
+  details.methodology li{margin:6px 0; font-weight:500;}
+
+  footer{max-width:1080px; margin:36px auto 0; padding:22px 20px 0; font-size:12px; font-weight:500; color:var(--ink-muted); border-top:1px solid var(--border);}
+
+  @media (max-width:900px){
+    .form-grid{grid-template-columns:1fr 1fr 1fr;}
+  }
+  @media (max-width:860px){
+    .cards-row{grid-template-columns:1fr;}
+  }
+  @media (max-width:480px){
+    .form-grid{grid-template-columns:1fr 1fr;}
+    h1{font-size:23px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="eyebrow">SKT · KT · LG U+ 맞춤 추천</div>
+  <h1>내 조건에 맞는 통신사·요금제 추천</h1>
+  <p class="sub">원하는 휴대폰 모델과 예산·사용량·중요 기준을 고르면, 3사의 지원금과 요금제를 반영한 24개월 예상 총비용을 비교해 가장 유리한 조합을 추천합니다. 3사 중 2곳 이상에서 비교 가능한 모델만 목록에 포함했습니다.</p>
+</header>
+
+<section>
+  <div class="panel">
+    <div class="form-grid">
+      <div class="field">
+        <label for="modelSelect">휴대폰 모델</label>
+        <select id="modelSelect"></select>
+      </div>
+      <div class="field">
+        <label for="capacitySelect">용량</label>
+        <select id="capacitySelect"></select>
+      </div>
+      <div class="field">
+        <label for="joinType">가입유형</label>
+        <select id="joinType">
+          <option value="기기변경">기기변경</option>
+          <option value="번호이동">번호이동</option>
+          <option value="신규가입">신규가입</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>월 예산</label>
+        <div class="stepper">
+          <button type="button" id="budgetMinus" aria-label="예산 감소">−</button>
+          <div class="stepper-val"><span id="budgetVal">10</span><span class="unit">만원</span></div>
+          <button type="button" id="budgetPlus" aria-label="예산 증가">+</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="usage">월 데이터 사용량(GB)</label>
+        <input type="number" id="usage" value="30" step="1" min="0">
+        <div class="unlimited-row"><input type="checkbox" id="unlimited" checked><label for="unlimited">무제한 요금제 필요</label></div>
+      </div>
+      <div class="field">
+        <label for="criterion">중요 기준</label>
+        <select id="criterion">
+          <option value="price">가격 최우선(가장 저렴한 요금제)</option>
+          <option value="data">데이터 최우선(예산 내 최대 데이터)</option>
+          <option value="benefit">혜택 우선(구독·멤버십 포함 요금제)</option>
+        </select>
+      </div>
+      <button id="calcBtn">추천 결과 보기</button>
+    </div>
+  </div>
+</section>
+
+<section id="resultArea">
+  <h2>추천 결과</h2>
+  <div id="winnerBanner"></div>
+
+  <div class="cost-chart">
+    <div class="cc-title">24개월 예상 총비용 한눈에 비교</div>
+    <div id="costChart"></div>
+  </div>
+
+  <div class="cards-row" id="cardsRow"></div>
+
+  <h2>3사 비교표</h2>
+  <div class="table-scroll">
+  <table class="compare" id="compareTable">
+    <thead>
+      <tr><th>통신사</th><th>선택 요금제</th><th>월정액</th><th>지원금 합계</th><th>구매가(단말)</th><th>추천 방식</th><th>24개월 총비용</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  </div>
+
+  <div class="reason-box">
+    <h3>추천 근거</h3>
+    <ul id="reasonList"></ul>
+  </div>
+
+  <div class="limits-box">
+    <h3>데이터 한계 및 유의사항</h3>
+    <ul>
+      <li>지원금은 SKT 베스트109(109,000원)/KT 초이스90(90,000원)/LG U+ 플러스플랜95(95,000원) 요금제 기준으로 수집된 값입니다. 선택한 요금제 월정액이 이보다 낮으면 <b>월정액 비율만큼 선형으로 추정 감액</b>했으며, 이는 저희가 만든 추정 방식으로 실제 통신사의 요금제별 공시 지원금 테이블과 다를 수 있습니다(<span class="est-flag">추정</span> 표시).</li>
+      <li>KT는 목록 화면에서 추가지원금(유통망지원금)을 공개하지 않습니다. 이 도구는 KT의 추가지원금을 0원으로 가정하지 않고 계산에서 제외했으며, 그만큼 KT의 실제 구매가는 이 결과보다 <b>더 낮을 수 있습니다.</b></li>
+      <li>가입유형(번호이동/기기변경/신규가입)은 3사 모두 지원금 차이가 없어(단통법상 차등 지급 금지) 계산에 영향을 주지 않습니다. 카드할인, 결합상품 할인, 멤버십 혜택 등은 반영되지 않았습니다.</li>
+      <li>요금제의 부가 혜택(스트리밍 구독, 멤버십 등)은 금전적 가치로 환산해 총비용에 포함하지 않았습니다 — "혜택 우선" 기준은 혜택이 포함된 요금제 그룹을 우선 선택할 뿐, 혜택의 금액 가치를 계산하지는 않습니다.</li>
+      <li>카드별 요금제 드롭다운에서 직접 다른 요금제를 선택하면, 그 요금제 기준으로 지원금·구매가·총비용이 즉시 다시 계산됩니다.</li>
+      <li>이 결과는 참고용 추정치이며, 실제 가입 시 금액은 통신사 공식 채널에서 반드시 재확인하시기 바랍니다.</li>
+    </ul>
+    <details class="methodology">
+      <summary>계산 방식 자세히 보기</summary>
+      <div class="m-body">
+        <ol>
+          <li><b>요금제 정규화:</b> 3사 요금제를 월정액 구간으로 나열하고, 선택한 예산·사용량·중요기준을 만족하는 요금제 중 하나를 통신사별로 자동 선택합니다(무약정 온라인 전용 요금제는 지원금/선택약정 대상이 아니라 제외). 카드에서 직접 다른 요금제로 바꿀 수도 있습니다.</li>
+          <li><b>동일 구간 지원금 재비교:</b> 선택된 요금제 월정액이 수집 기준 요금제와 다르면, 월정액 비율(상한 100%)만큼 공통지원금·추가지원금을 선형으로 추정합니다.</li>
+          <li><b>선택약정 vs 공시지원금 비교:</b> (A) 공시지원금 방식 = 요금제 월정액×24 + (출고가−추정 지원금 합계). (B) 선택약정 방식 = 선택약정 시 월요금(월정액×0.75)×24 + 출고가(할인 없음). 두 값 중 더 낮은 쪽을 해당 통신사의 추천 방식으로 표시합니다.</li>
+          <li>3사의 추천 방식 기준 총비용을 비교해 가장 낮은 통신사를 최종 추천합니다. "예상 월 요금"은 총비용을 24개월로 균등 배분한 값(요금제 월정액 + 단말 할부금)입니다.</li>
+        </ol>
+      </div>
+    </details>
+  </div>
+</section>
+
+<footer>
+  지원금 출처: SKT T world(shop.tworld.co.kr/notice), KT닷컴(shop.kt.com/smart/supportAmtList.do), LG U+ 이동사지원금 API · 요금제 출처: tworld.co.kr, product.kt.com, lguplus.com 요금제 안내 페이지 · 수집일 2026-08-14
+</footer>
+
+<script>
+const DATA = {"phones": [{"key": "iphone16128gb", "name": "iPhone 16", "capacity": "128GB", "carriers": {"SKT": {"list": 1243000, "common": 220000, "extra": 33000, "total": 253000, "date": "2025.10.01"}, "KT": {"list": 1023000, "common": 600000, "extra": null, "total": null, "date": "2026.01.08"}, "LGU": {"list": 1243000, "common": 450000, "extra": 67500, "total": 517500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone16256gb", "name": "iPhone 16", "capacity": "256GB", "carriers": {"SKT": {"list": 1397000, "common": 220000, "extra": 33000, "total": 253000, "date": "2025.10.01"}, "KT": {"list": 1177000, "common": 600000, "extra": null, "total": null, "date": "2026.01.08"}, "LGU": {"list": 1397000, "common": 450000, "extra": 67500, "total": 517500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone16512gb", "name": "iPhone 16", "capacity": "512GB", "carriers": {"SKT": {"list": 1694000, "common": 220000, "extra": 33000, "total": 253000, "date": "2025.10.01"}, "KT": {"list": 1474000, "common": 600000, "extra": null, "total": null, "date": "2026.01.08"}, "LGU": {"list": 1694000, "common": 450000, "extra": 67500, "total": 517500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone16pro128gb", "name": "iPhone 16 Pro", "capacity": "128GB", "carriers": {"SKT": {"list": 1540000, "common": 220000, "extra": 33000, "total": 253000, "date": "2025.10.01"}, "KT": {"list": 1320000, "common": 600000, "extra": null, "total": null, "date": "2026.01.08"}, "LGU": {"list": 1540000, "common": 450000, "extra": 67500, "total": 517500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone16pro1tb", "name": "iPhone 16 Pro", "capacity": "1TB", "carriers": {"SKT": {"list": 2299000, "common": 220000, "extra": 33000, "total": 253000, "date": "2025.10.01"}, "KT": {"list": 2079000, "common": 600000, "extra": null, "total": null, "date": "2026.01.08"}, "LGU": {"list": 2299000, "common": 450000, "extra": 67500, "total": 517500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone16pro256gb", "name": "iPhone 16 Pro", "capacity": "256GB", "carriers": {"SKT": {"list": 1694000, "common": 220000, "extra": 33000, "total": 253000, "date": "2025.10.01"}, "KT": {"list": 1474000, "common": 600000, "extra": null, "total": null, "date": "2026.01.08"}, "LGU": {"list": 1694000, "common": 450000, "extra": 67500, "total": 517500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone16pro512gb", "name": "iPhone 16 Pro", "capacity": "512GB", "carriers": {"SKT": {"list": 1991000, "common": 220000, "extra": 33000, "total": 253000, "date": "2025.10.01"}, "KT": {"list": 1771000, "common": 600000, "extra": null, "total": null, "date": "2026.01.08"}, "LGU": {"list": 1991000, "common": 450000, "extra": 67500, "total": 517500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone16promax1tb", "name": "iPhone 16 Pro Max", "capacity": "1TB", "carriers": {"SKT": {"list": 2497000, "common": 220000, "extra": 33000, "total": 253000, "date": "2025.10.01"}, "KT": {"list": 2277000, "common": 600000, "extra": null, "total": null, "date": "2026.01.08"}, "LGU": {"list": 2497000, "common": 450000, "extra": 67500, "total": 517500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone16promax256gb", "name": "iPhone 16 Pro Max", "capacity": "256GB", "carriers": {"SKT": {"list": 1892000, "common": 220000, "extra": 33000, "total": 253000, "date": "2025.10.01"}, "KT": {"list": 1672000, "common": 600000, "extra": null, "total": null, "date": "2026.01.08"}, "LGU": {"list": 1892000, "common": 450000, "extra": 67500, "total": 517500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone16promax512gb", "name": "iPhone 16 Pro Max", "capacity": "512GB", "carriers": {"SKT": {"list": 2200000, "common": 220000, "extra": 33000, "total": 253000, "date": "2025.10.01"}, "KT": {"list": 1980000, "common": 600000, "extra": null, "total": null, "date": "2026.01.08"}, "LGU": {"list": 2200000, "common": 450000, "extra": 67500, "total": 517500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone17256gb", "name": "iPhone 17", "capacity": "256GB", "carriers": {"SKT": {"list": 1287000, "common": 450000, "extra": 67500, "total": 517500, "date": "2025.11.14"}, "KT": {"list": 1287000, "common": 450000, "extra": null, "total": null, "date": "2026.02.24"}, "LGU": {"list": 1287000, "common": 450000, "extra": 82500, "total": 532500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone17512gb", "name": "iPhone 17", "capacity": "512GB", "carriers": {"SKT": {"list": 1584000, "common": 450000, "extra": 67500, "total": 517500, "date": "2025.11.14"}, "KT": {"list": 1584000, "common": 450000, "extra": null, "total": null, "date": "2026.02.24"}, "LGU": {"list": 1584000, "common": 450000, "extra": 82500, "total": 532500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone17pro1tb", "name": "iPhone 17 Pro", "capacity": "1TB", "carriers": {"SKT": {"list": 2387000, "common": 450000, "extra": 67500, "total": 517500, "date": "2025.09.13"}, "KT": {"list": 2387000, "common": 450000, "extra": null, "total": null, "date": "2026.01.14"}, "LGU": {"list": 2387000, "common": 450000, "extra": 82500, "total": 532500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone17pro256gb", "name": "iPhone 17 Pro", "capacity": "256GB", "carriers": {"SKT": {"list": 1782000, "common": 450000, "extra": 67500, "total": 517500, "date": "2025.09.13"}, "KT": {"list": 1782000, "common": 450000, "extra": null, "total": null, "date": "2026.01.14"}, "LGU": {"list": 1782000, "common": 450000, "extra": 82500, "total": 532500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone17pro512gb", "name": "iPhone 17 Pro", "capacity": "512GB", "carriers": {"SKT": {"list": 2090000, "common": 450000, "extra": 67500, "total": 517500, "date": "2025.09.13"}, "KT": {"list": 2090000, "common": 450000, "extra": null, "total": null, "date": "2026.01.14"}, "LGU": {"list": 2090000, "common": 450000, "extra": 82500, "total": 532500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone17promax1tb", "name": "iPhone 17 Pro Max", "capacity": "1TB", "carriers": {"SKT": {"list": 2585000, "common": 220000, "extra": 33000, "total": 253000, "date": "2025.09.12"}, "KT": {"list": 2585000, "common": 150000, "extra": null, "total": null, "date": "2025.09.12"}, "LGU": {"list": 2585000, "common": 168000, "extra": 25200, "total": 193200, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone17promax256gb", "name": "iPhone 17 Pro Max", "capacity": "256GB", "carriers": {"SKT": {"list": 1980000, "common": 220000, "extra": 33000, "total": 253000, "date": "2025.09.12"}, "KT": {"list": 1980000, "common": 150000, "extra": null, "total": null, "date": "2025.09.12"}, "LGU": {"list": 1980000, "common": 168000, "extra": 25200, "total": 193200, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone17promax512gb", "name": "iPhone 17 Pro Max", "capacity": "512GB", "carriers": {"SKT": {"list": 2288000, "common": 220000, "extra": 33000, "total": 253000, "date": "2025.09.12"}, "KT": {"list": 2288000, "common": 150000, "extra": null, "total": null, "date": "2025.09.12"}, "LGU": {"list": 2288000, "common": 168000, "extra": 25200, "total": 193200, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone17e256gb", "name": "iPhone 17e", "capacity": "256GB", "carriers": {"SKT": {"list": 990000, "common": 128000, "extra": 19200, "total": 147200, "date": "2026.03.04"}, "KT": {"list": 990000, "common": 450000, "extra": null, "total": null, "date": "2026.03.25"}, "LGU": {"list": 990000, "common": 168000, "extra": 25200, "total": 193200, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphone17e512gb", "name": "iPhone 17e", "capacity": "512GB", "carriers": {"SKT": {"list": 1287000, "common": 128000, "extra": 19200, "total": 147200, "date": "2026.03.04"}, "KT": {"list": 1287000, "common": 450000, "extra": null, "total": null, "date": "2026.03.25"}, "LGU": {"list": 1287000, "common": 168000, "extra": 25200, "total": 193200, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphoneair1tb", "name": "iPhone Air", "capacity": "1TB", "carriers": {"SKT": {"list": 2189000, "common": 450000, "extra": 67500, "total": 517500, "date": "2025.09.13"}, "KT": {"list": 2189000, "common": 450000, "extra": null, "total": null, "date": "2026.01.14"}, "LGU": {"list": 2189000, "common": 450000, "extra": 82500, "total": 532500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphoneair256gb", "name": "iPhone Air", "capacity": "256GB", "carriers": {"SKT": {"list": 1584000, "common": 450000, "extra": 67500, "total": 517500, "date": "2025.09.13"}, "KT": {"list": 1584000, "common": 450000, "extra": null, "total": null, "date": "2026.01.14"}, "LGU": {"list": 1584000, "common": 450000, "extra": 82500, "total": 532500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "iphoneair512gb", "name": "iPhone Air", "capacity": "512GB", "carriers": {"SKT": {"list": 1881000, "common": 450000, "extra": 67500, "total": 517500, "date": "2025.09.13"}, "KT": {"list": 1881000, "common": 450000, "extra": null, "total": null, "date": "2026.01.14"}, "LGU": {"list": 1881000, "common": 450000, "extra": 82500, "total": 532500, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "galaxya17128gb", "name": "갤럭시 A17", "capacity": "128GB", "carriers": {"SKT": {"list": 319000, "common": 130000, "extra": 19500, "total": 149500, "date": "2025.11.07"}, "KT": {"list": 319000, "common": 150000, "extra": null, "total": null, "date": "2026.01.20"}, "LGU": {"list": 319000, "common": 319000, "extra": 0, "total": 319000, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "galaxys25256gb", "name": "갤럭시 S25", "capacity": "256GB", "carriers": {"SKT": {"list": 1155000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.06.23"}, "KT": {"list": 1155000, "common": 500000, "extra": null, "total": null, "date": "2026.02.24"}, "LGU": {"list": 1155000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-06-23"}}, "carrierCount": 3}, {"key": "galaxys25512gb", "name": "갤럭시 S25", "capacity": "512GB", "carriers": {"SKT": {"list": 1298000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.06.23"}, "KT": {"list": 1298000, "common": 500000, "extra": null, "total": null, "date": "2026.06.23"}, "LGU": {"list": 1298000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-06-23"}}, "carrierCount": 3}, {"key": "galaxys25edge256gb", "name": "갤럭시 S25 엣지", "capacity": "256GB", "carriers": {"SKT": {"list": 1496000, "common": 680000, "extra": 102000, "total": 782000, "date": "2026.06.02"}, "KT": {"list": 1353000, "common": 700000, "extra": null, "total": null, "date": "2026.06.02"}, "LGU": {"list": 1353000, "common": 700000, "extra": 90000, "total": 790000, "date": "2026-06-02"}}, "carrierCount": 3}, {"key": "galaxys25edge512gb", "name": "갤럭시 S25 엣지", "capacity": "512GB", "carriers": {"SKT": {"list": 1639000, "common": 680000, "extra": 102000, "total": 782000, "date": "2026.06.02"}, "KT": {"list": 1496000, "common": 700000, "extra": null, "total": null, "date": "2026.06.02"}, "LGU": {"list": 1496000, "common": 700000, "extra": 105000, "total": 805000, "date": "2026-06-02"}}, "carrierCount": 3}, {"key": "galaxys25ultra1tb", "name": "갤럭시 S25 울트라", "capacity": "1TB", "carriers": {"SKT": {"list": 2127400, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.06.23"}, "KT": {"list": 2127400, "common": 500000, "extra": null, "total": null, "date": "2026.06.23"}, "LGU": {"list": 2127400, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-06-23"}}, "carrierCount": 3}, {"key": "galaxys25ultra256gb", "name": "갤럭시 S25 울트라", "capacity": "256GB", "carriers": {"SKT": {"list": 1698400, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.06.23"}, "KT": {"list": 1698400, "common": 500000, "extra": null, "total": null, "date": "2026.06.23"}, "LGU": {"list": 1698400, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-06-23"}}, "carrierCount": 3}, {"key": "galaxys25ultra512gb", "name": "갤럭시 S25 울트라", "capacity": "512GB", "carriers": {"SKT": {"list": 1841400, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.06.23"}, "KT": {"list": 1841400, "common": 500000, "extra": null, "total": null, "date": "2026.06.23"}, "LGU": {"list": 1841400, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-06-23"}}, "carrierCount": 3}, {"key": "galaxys25plus256gb", "name": "갤럭시 S25+", "capacity": "256GB", "carriers": {"SKT": {"list": 1353000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.06.23"}, "KT": {"list": 1353000, "common": 500000, "extra": null, "total": null, "date": "2026.06.23"}, "LGU": {"list": 1353000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-06-23"}}, "carrierCount": 3}, {"key": "galaxys25plus512gb", "name": "갤럭시 S25+", "capacity": "512GB", "carriers": {"SKT": {"list": 1496000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.06.23"}, "KT": {"list": 1496000, "common": 500000, "extra": null, "total": null, "date": "2026.06.23"}, "LGU": {"list": 1496000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-06-23"}}, "carrierCount": 3}, {"key": "galaxys26256gb", "name": "갤럭시 S26", "capacity": "256GB", "carriers": {"SKT": {"list": 1254000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.06.02"}, "KT": {"list": 1254000, "common": 500000, "extra": null, "total": null, "date": "2026.06.02"}, "LGU": {"list": 1254000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-06-02"}}, "carrierCount": 3}, {"key": "galaxys26512gb", "name": "갤럭시 S26", "capacity": "512GB", "carriers": {"SKT": {"list": 1507000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.06.02"}, "KT": {"list": 1507000, "common": 500000, "extra": null, "total": null, "date": "2026.06.02"}, "LGU": {"list": 1507000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-06-02"}}, "carrierCount": 3}, {"key": "galaxys26ultra256gb", "name": "갤럭시 S26 울트라", "capacity": "256GB", "carriers": {"SKT": {"list": 1797400, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.06.02"}, "KT": {"list": 1797400, "common": 500000, "extra": null, "total": null, "date": "2026.06.02"}, "LGU": {"list": 1797400, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-06-02"}}, "carrierCount": 3}, {"key": "galaxys26plus256gb", "name": "갤럭시 S26+", "capacity": "256GB", "carriers": {"SKT": {"list": 1452000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.06.02"}, "KT": {"list": 1452000, "common": 500000, "extra": null, "total": null, "date": "2026.06.02"}, "LGU": {"list": 1452000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-06-02"}}, "carrierCount": 3}, {"key": "galaxys26plus512gb", "name": "갤럭시 S26+", "capacity": "512GB", "carriers": {"SKT": {"list": 1705000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.06.02"}, "KT": {"list": 1705000, "common": 500000, "extra": null, "total": null, "date": "2026.06.02"}, "LGU": {"list": 1705000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-06-02"}}, "carrierCount": 3}, {"key": "galaxyzfold71tb", "name": "갤럭시 Z 폴드7", "capacity": "1TB", "carriers": {"SKT": {"list": 2933700, "common": 500000, "extra": 75000, "total": 575000, "date": "2025.07.15"}, "KT": {"list": 2933700, "common": 500000, "extra": null, "total": null, "date": "2026.01.14"}, "LGU": {"list": 2933700, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "galaxyzfold7256gb", "name": "갤럭시 Z 폴드7", "capacity": "256GB", "carriers": {"SKT": {"list": 2379300, "common": 500000, "extra": 75000, "total": 575000, "date": "2025.07.22"}, "KT": {"list": 2379300, "common": 500000, "extra": null, "total": null, "date": "2026.01.14"}, "LGU": {"list": 2379300, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "galaxyzfold7512gb", "name": "갤럭시 Z 폴드7", "capacity": "512GB", "carriers": {"SKT": {"list": 2537700, "common": 500000, "extra": 75000, "total": 575000, "date": "2025.07.15"}, "KT": {"list": 2537700, "common": 500000, "extra": null, "total": null, "date": "2026.01.14"}, "LGU": {"list": 2537700, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-05-29"}}, "carrierCount": 3}, {"key": "galaxyzfold81tb", "name": "갤럭시 Z 폴드8", "capacity": "1TB", "carriers": {"SKT": {"list": 3152600, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.07.28"}, "KT": {"list": 3152600, "common": 500000, "extra": null, "total": null, "date": "2026.07.28"}, "LGU": {"list": 3152600, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-07-28"}}, "carrierCount": 3}, {"key": "galaxyzfold8256gb", "name": "갤럭시 Z 폴드8", "capacity": "256GB", "carriers": {"SKT": {"list": 2278100, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.08.04"}, "KT": {"list": 2278100, "common": 500000, "extra": null, "total": null, "date": "2026.07.28"}, "LGU": {"list": 2278100, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-07-28"}}, "carrierCount": 3}, {"key": "galaxyzfold8512gb", "name": "갤럭시 Z 폴드8", "capacity": "512GB", "carriers": {"SKT": {"list": 2531100, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.07.28"}, "KT": {"list": 2531100, "common": 500000, "extra": null, "total": null, "date": "2026.07.28"}, "LGU": {"list": 2531100, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-07-28"}}, "carrierCount": 3}, {"key": "galaxyzfold8ultra1tb", "name": "갤럭시 Z 폴드8 울트라", "capacity": "1TB", "carriers": {"SKT": {"list": 3451800, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.07.28"}, "KT": {"list": 3451800, "common": 500000, "extra": null, "total": null, "date": "2026.07.28"}, "LGU": {"list": 3451800, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-07-28"}}, "carrierCount": 3}, {"key": "galaxyzfold8ultra256gb", "name": "갤럭시 Z 폴드8 울트라", "capacity": "256GB", "carriers": {"SKT": {"list": 2577300, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.08.04"}, "KT": {"list": 2577300, "common": 500000, "extra": null, "total": null, "date": "2026.07.28"}, "LGU": {"list": 2577300, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-07-28"}}, "carrierCount": 3}, {"key": "galaxyzfold8ultra512gb", "name": "갤럭시 Z 폴드8 울트라", "capacity": "512GB", "carriers": {"SKT": {"list": 2830300, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.07.28"}, "KT": {"list": 2830300, "common": 500000, "extra": null, "total": null, "date": "2026.07.28"}, "LGU": {"list": 2830300, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-07-28"}}, "carrierCount": 3}, {"key": "galaxyzflip7256gb", "name": "갤럭시 Z 플립7", "capacity": "256GB", "carriers": {"SKT": {"list": 1485000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.06.02"}, "KT": {"list": 1485000, "common": 500000, "extra": null, "total": null, "date": "2026.06.02"}, "LGU": {"list": 1485000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-06-02"}}, "carrierCount": 3}, {"key": "galaxyzflip7512gb", "name": "갤럭시 Z 플립7", "capacity": "512GB", "carriers": {"SKT": {"list": 1643400, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.06.02"}, "KT": {"list": 1643400, "common": 500000, "extra": null, "total": null, "date": "2026.06.02"}, "LGU": {"list": 1643400, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-06-02"}}, "carrierCount": 3}, {"key": "galaxyzflip8256gb", "name": "갤럭시 Z 플립8", "capacity": "256GB", "carriers": {"SKT": {"list": 1683000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.08.04"}, "KT": {"list": 1683000, "common": 500000, "extra": null, "total": null, "date": "2026.07.28"}, "LGU": {"list": 1683000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-07-28"}}, "carrierCount": 3}, {"key": "galaxyzflip8512gb", "name": "갤럭시 Z 플립8", "capacity": "512GB", "carriers": {"SKT": {"list": 1936000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.07.28"}, "KT": {"list": 1936000, "common": 500000, "extra": null, "total": null, "date": "2026.07.28"}, "LGU": {"list": 1936000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-07-28"}}, "carrierCount": 3}, {"key": "iphone15plus128gb", "name": "iPhone 15 Plus", "capacity": "128GB", "carriers": {"SKT": {"list": 1342000, "common": 470000, "extra": 70500, "total": 540500, "date": "2026.06.09"}, "KT": null, "LGU": {"list": 1342000, "common": 450000, "extra": 67500, "total": 517500, "date": "2026-05-29"}}, "carrierCount": 2}, {"key": "iphone16plus128gb", "name": "iPhone 16 Plus", "capacity": "128GB", "carriers": {"SKT": null, "KT": {"list": 1122000, "common": 600000, "extra": null, "total": null, "date": "2026.01.08"}, "LGU": {"list": 1342000, "common": 168000, "extra": 25200, "total": 193200, "date": "2026-05-29"}}, "carrierCount": 2}, {"key": "iphone16plus256gb", "name": "iPhone 16 Plus", "capacity": "256GB", "carriers": {"SKT": null, "KT": {"list": 1276000, "common": 600000, "extra": null, "total": null, "date": "2026.01.08"}, "LGU": {"list": 1496000, "common": 168000, "extra": 25200, "total": 193200, "date": "2026-05-29"}}, "carrierCount": 2}, {"key": "iphone16plus512gb", "name": "iPhone 16 Plus", "capacity": "512GB", "carriers": {"SKT": null, "KT": {"list": 1573000, "common": 600000, "extra": null, "total": null, "date": "2026.01.08"}, "LGU": {"list": 1793000, "common": 168000, "extra": 25200, "total": 193200, "date": "2026-05-29"}}, "carrierCount": 2}, {"key": "iphone16e128gb", "name": "iPhone 16e", "capacity": "128GB", "carriers": {"SKT": {"list": 990000, "common": 220000, "extra": 33000, "total": 253000, "date": "2025.10.01"}, "KT": null, "LGU": {"list": 990000, "common": 168000, "extra": 25200, "total": 193200, "date": "2026-05-29"}}, "carrierCount": 2}, {"key": "iphone16e256gb", "name": "iPhone 16e", "capacity": "256GB", "carriers": {"SKT": {"list": 1133000, "common": 220000, "extra": 33000, "total": 253000, "date": "2025.10.01"}, "KT": null, "LGU": {"list": 1133000, "common": 168000, "extra": 25200, "total": 193200, "date": "2026-05-29"}}, "carrierCount": 2}, {"key": "iphone16e512gb", "name": "iPhone 16e", "capacity": "512GB", "carriers": {"SKT": {"list": 1430000, "common": 220000, "extra": 33000, "total": 253000, "date": "2025.10.01"}, "KT": null, "LGU": {"list": 1430000, "common": 168000, "extra": 25200, "total": 193200, "date": "2026-05-29"}}, "carrierCount": 2}, {"key": "iphone17promax2tb", "name": "iPhone 17 Pro Max", "capacity": "2TB", "carriers": {"SKT": null, "KT": {"list": 3190000, "common": 150000, "extra": null, "total": null, "date": "2025.09.12"}, "LGU": {"list": 3190000, "common": 168000, "extra": 25200, "total": 193200, "date": "2026-05-29"}}, "carrierCount": 2}, {"key": "galaxya36128gb", "name": "갤럭시 A36", "capacity": "128GB", "carriers": {"SKT": {"list": 499400, "common": 400000, "extra": 98400, "total": 498400, "date": "2025.06.12"}, "KT": {"list": 499400, "common": 150000, "extra": null, "total": null, "date": "2026.05.27"}, "LGU": null}, "carrierCount": 2}, {"key": "galaxya37128gb", "name": "갤럭시 A37", "capacity": "128GB", "carriers": {"SKT": {"list": 598400, "common": 170000, "extra": 25500, "total": 195500, "date": "2026.06.19"}, "KT": {"list": 598400, "common": 150000, "extra": null, "total": null, "date": "2026.06.19"}, "LGU": null}, "carrierCount": 2}, {"key": "galaxys25fe256gb", "name": "갤럭시 S25 FE", "capacity": "256GB", "carriers": {"SKT": {"list": 946000, "common": 500000, "extra": 75000, "total": 575000, "date": "2025.11.07"}, "KT": {"list": 946000, "common": 500000, "extra": null, "total": null, "date": "2026.01.14"}, "LGU": null}, "carrierCount": 2}, {"key": "galaxys26ultra1tb", "name": "갤럭시 S26 울트라", "capacity": "1TB", "carriers": {"SKT": {"list": 2545400, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.06.02"}, "KT": {"list": 2545400, "common": 500000, "extra": null, "total": null, "date": "2026.06.02"}, "LGU": null}, "carrierCount": 2}, {"key": "galaxys26ultra512gb", "name": "갤럭시 S26 울트라", "capacity": "512GB", "carriers": {"SKT": {"list": 2050400, "common": 500000, "extra": 75000, "total": 575000, "date": "2026.06.02"}, "KT": {"list": 2050400, "common": 500000, "extra": null, "total": null, "date": "2026.06.02"}, "LGU": null}, "carrierCount": 2}, {"key": "galaxyzflip6256gb", "name": "갤럭시 Z 플립6", "capacity": "256GB", "carriers": {"SKT": {"list": 1485000, "common": 600000, "extra": 90000, "total": 690000, "date": "2024.10.25"}, "KT": null, "LGU": {"list": 1485000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-05-29"}}, "carrierCount": 2}, {"key": "galaxyzflip7fe256gb", "name": "갤럭시 Z 플립7 FE", "capacity": "256GB", "carriers": {"SKT": {"list": 1199000, "common": 500000, "extra": 75000, "total": 575000, "date": "2025.11.07"}, "KT": {"list": 1199000, "common": 600000, "extra": null, "total": null, "date": "2025.10.02"}, "LGU": null}, "carrierCount": 2}, {"key": "galaxybuddy3", "name": "Galaxy Buddy3", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 399300, "common": 399000, "extra": 59850, "total": 458850, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "mivestylefolder2", "name": "MIVE 스타일폴더2", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 237600, "common": 206000, "extra": 30900, "total": 236900, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "motog86power256gb", "name": "MOTO G86 power 5G", "capacity": "256GB", "carriers": {"SKT": {"list": 429000, "common": 293400, "extra": 44100, "total": 337500, "date": "2026.06.09"}, "KT": null, "LGU": null}, "carrierCount": 1}, {"key": "redminote14pro", "name": "Redmi Note 14 Pro", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 399300, "common": 286000, "extra": 42900, "total": 328900, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "uplus", "name": "U+ 키즈폰 무너에디션", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 365200, "common": 269000, "extra": 40350, "total": 309350, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "uplus2", "name": "U+키즈폰 무너에디션2", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 369500, "common": 274000, "extra": 95500, "total": 369500, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "zem2128gb", "name": "ZEM폰 포켓몬에디션2", "capacity": "128GB", "carriers": {"SKT": {"list": 253000, "common": 220000, "extra": 0, "total": 220000, "date": "2025.08.01"}, "KT": null, "LGU": null}, "carrierCount": 1}, {"key": "zem128gb", "name": "ZEM폰 포켓피스", "capacity": "128GB", "carriers": {"SKT": {"list": 349800, "common": 130000, "extra": 0, "total": 130000, "date": "2025.12.09"}, "KT": null, "LGU": null}, "carrierCount": 1}, {"key": "iphone13128gb", "name": "iPhone 13", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 748000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "iphone15128gb", "name": "iPhone 15", "capacity": "128GB", "carriers": {"SKT": {"list": 1243000, "common": 550000, "extra": 346000, "total": 896000, "date": "2026.04.17"}, "KT": null, "LGU": null}, "carrierCount": 1}, {"key": "iphone15256gb", "name": "iPhone 15", "capacity": "256GB", "carriers": {"SKT": {"list": 1397000, "common": 550000, "extra": 346000, "total": 896000, "date": "2026.04.17"}, "KT": null, "LGU": null}, "carrierCount": 1}, {"key": "iphone15512gb", "name": "iPhone 15", "capacity": "512GB", "carriers": {"SKT": {"list": 1694000, "common": 550000, "extra": 346000, "total": 896000, "date": "2026.04.17"}, "KT": null, "LGU": null}, "carrierCount": 1}, {"key": "iphone15plus512gb", "name": "iPhone 15 Plus", "capacity": "512GB", "carriers": {"SKT": {"list": 1793000, "common": 470000, "extra": 70500, "total": 540500, "date": "2026.06.09"}, "KT": null, "LGU": null}, "carrierCount": 1}, {"key": "iphone15promax256gb", "name": "iPhone 15 Pro Max_", "capacity": "256GB", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 1892000, "common": 450000, "extra": 67500, "total": 517500, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "motog56256gb", "name": "moto g56", "capacity": "256GB", "carriers": {"SKT": null, "KT": {"list": 330000, "common": 290000, "extra": null, "total": null, "date": "2025.08.14"}, "LGU": null}, "carrierCount": 1}, {"key": "motog77256gb", "name": "moto g77", "capacity": "256GB", "carriers": {"SKT": null, "KT": {"list": 396000, "common": 320000, "extra": null, "total": null, "date": "2026.08.14"}, "LGU": null}, "carrierCount": 1}, {"key": "galaxya15", "name": "갤럭시 A15", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 319000, "common": 239000, "extra": 35850, "total": 274850, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxya16", "name": "갤럭시 A16", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 319000, "common": 269000, "extra": 40350, "total": 309350, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxya37", "name": "갤럭시 A37", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 598400, "common": 400000, "extra": 298400, "total": 698400, "date": "2026-06-19"}}, "carrierCount": 1}, {"key": "galaxybuddy4", "name": "갤럭시 Buddy4", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 399300, "common": 399000, "extra": 59850, "total": 458850, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxybuddy5", "name": "갤럭시 Buddy5", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 528000, "common": 400000, "extra": 60000, "total": 460000, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxyjump4128gb", "name": "갤럭시 Jump4", "capacity": "128GB", "carriers": {"SKT": null, "KT": {"list": 449900, "common": 150000, "extra": null, "total": null, "date": "2026.05.22"}, "LGU": null}, "carrierCount": 1}, {"key": "galaxyjump5128gb", "name": "갤럭시 Jump5", "capacity": "128GB", "carriers": {"SKT": null, "KT": {"list": 545600, "common": 150000, "extra": null, "total": null, "date": "2026.06.29"}, "LGU": null}, "carrierCount": 1}, {"key": "galaxys23ultra512gb", "name": "갤럭시 S23 Ultra 중고폰", "capacity": "512GB", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 773300, "common": 372000, "extra": 98000, "total": 470000, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxys23ultra", "name": "갤럭시 S23 Ultra 중고폰", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 753300, "common": 372000, "extra": 98000, "total": 470000, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxys23512gb", "name": "갤럭시 S23 중고폰", "capacity": "512GB", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 528000, "common": 372000, "extra": 98000, "total": 470000, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxys23", "name": "갤럭시 S23 중고폰", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 508000, "common": 372000, "extra": 98000, "total": 470000, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxys23plus512gb", "name": "갤럭시 S23+ 중고폰", "capacity": "512GB", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 575300, "common": 372000, "extra": 98000, "total": 470000, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxys23plus", "name": "갤럭시 S23+ 중고폰", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 555300, "common": 372000, "extra": 98000, "total": 470000, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxys24fe", "name": "갤럭시 S24 FE", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 946000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxys24ultra", "name": "갤럭시 S24 Ultra 중고폰", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 882000, "common": 372000, "extra": 61500, "total": 433500, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxys24ultra512gb", "name": "갤럭시 S24 Ultra 중고폰", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 932000, "common": 372000, "extra": 61500, "total": 433500, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxys24ultra256gb", "name": "갤럭시 S24 울트라 5G", "capacity": "256GB", "carriers": {"SKT": {"list": 1544400, "common": 630000, "extra": 94500, "total": 724500, "date": "2025.06.24"}, "KT": null, "LGU": null}, "carrierCount": 1}, {"key": "galaxys24", "name": "갤럭시 S24 중고폰", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 574000, "common": 372000, "extra": 61500, "total": 433500, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxys24512gb", "name": "갤럭시 S24 중고폰", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 624000, "common": 372000, "extra": 61500, "total": 433500, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxys24plus256gb", "name": "갤럭시 S24+ 5G", "capacity": "256GB", "carriers": {"SKT": {"list": 1254000, "common": 630000, "extra": 94500, "total": 724500, "date": "2025.06.24"}, "KT": null, "LGU": null}, "carrierCount": 1}, {"key": "galaxys24plus", "name": "갤럭시 S24+ 중고폰", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 618000, "common": 372000, "extra": 61500, "total": 433500, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxys24plus512gb", "name": "갤럭시 S24+ 중고폰", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 668000, "common": 372000, "extra": 61500, "total": 433500, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxys25fe", "name": "갤럭시 S25 FE", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 946000, "common": 500000, "extra": 75000, "total": 575000, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxyzflip5256gb", "name": "갤럭시 Z Flip 5 중고폰", "capacity": "256GB", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 485000, "common": 372000, "extra": 61500, "total": 433500, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxyzflip5512gb", "name": "갤럭시 Z Flip 5 중고폰", "capacity": "512GB", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 496000, "common": 372000, "extra": 61500, "total": 433500, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxyzflip7fe", "name": "갤럭시 Z Flip7 FE", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 1199000, "common": 500000, "extra": 600000, "total": 1100000, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "galaxyzfold61tb", "name": "갤럭시 Z Fold6", "capacity": "1TB", "carriers": {"SKT": null, "KT": {"list": 2704900, "common": 700000, "extra": null, "total": null, "date": "2026.01.08"}, "LGU": null}, "carrierCount": 1}, {"key": "galaxyzfold6512gb", "name": "갤럭시 Z Fold6", "capacity": "512GB", "carriers": {"SKT": null, "KT": {"list": 2388100, "common": 700000, "extra": null, "total": null, "date": "2026.01.08"}, "LGU": null}, "carrierCount": 1}, {"key": "galaxyzfold6", "name": "갤럭시 Z Fold6", "capacity": "미확인", "carriers": {"SKT": null, "KT": {"list": 2229700, "common": 700000, "extra": null, "total": null, "date": "2026.01.08"}, "LGU": null}, "carrierCount": 1}, {"key": "galaxyzflip6512gb", "name": "갤럭시 Z 플립6", "capacity": "512GB", "carriers": {"SKT": {"list": 1643400, "common": 600000, "extra": 90000, "total": 690000, "date": "2024.10.25"}, "KT": null, "LGU": null}, "carrierCount": 1}, {"key": "galaxywide8128gb", "name": "갤럭시 와이드8", "capacity": "128GB", "carriers": {"SKT": {"list": 374000, "common": 293400, "extra": 44100, "total": 337500, "date": "2025.07.01"}, "KT": null, "LGU": null}, "carrierCount": 1}, {"key": "galaxywide9128gb", "name": "갤럭시 와이드9", "capacity": "128GB", "carriers": {"SKT": {"list": 469700, "common": 170000, "extra": 25500, "total": 195500, "date": "2026.07.03"}, "KT": null, "LGU": null}, "carrierCount": 1}, {"key": "galaxyquantum6128gb", "name": "갤럭시 퀀텀6", "capacity": "128GB", "carriers": {"SKT": {"list": 618200, "common": 357000, "extra": 103600, "total": 460600, "date": "2025.08.01"}, "KT": null, "LGU": null}, "carrierCount": 1}, {"key": "14256gb", "name": "레드미노트 14", "capacity": "256GB", "carriers": {"SKT": null, "KT": {"list": 319000, "common": 278000, "extra": null, "total": null, "date": "2025.06.26"}, "LGU": null}, "carrierCount": 1}, {"key": "s128gb", "name": "맘편안폰S", "capacity": "128GB", "carriers": {"SKT": null, "KT": {"list": 499400, "common": 485000, "extra": null, "total": null, "date": "2026.02.24"}, "LGU": null}, "carrierCount": 1}, {"key": "edge70256gb", "name": "모토로라 edge 70", "capacity": "256GB", "carriers": {"SKT": null, "KT": {"list": 550000, "common": 450000, "extra": null, "total": null, "date": "2026.01.22"}, "LGU": null}, "carrierCount": 1}, {"key": "edge50", "name": "모토로라 엣지 50 퓨전", "capacity": "미확인", "carriers": {"SKT": null, "KT": {"list": 349800, "common": 330000, "extra": null, "total": null, "date": "2025.10.22"}, "LGU": null}, "carrierCount": 1}, {"key": "14tb256gb", "name": "샤오미", "capacity": "256GB", "carriers": {"SKT": null, "KT": {"list": 599500, "common": 522000, "extra": null, "total": null, "date": "2025.06.26"}, "LGU": null}, "carrierCount": 1}, {"key": "redmi14c128gb", "name": "샤오미 Redmi 14C", "capacity": "128GB", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 149600, "common": 131000, "extra": 19650, "total": 150650, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "redmi14c256gb", "name": "샤오미 Redmi 14C", "capacity": "256GB", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 199100, "common": 174000, "extra": 26100, "total": 200100, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "redminote13", "name": "샤오미 Redmi Note 13", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 299200, "common": 172000, "extra": 25800, "total": 197800, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "redminote13pro256gb", "name": "샤오미 Redmi Note 13 Pro", "capacity": "256GB", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 349800, "common": 286000, "extra": 42900, "total": 328900, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "redminote13pro512gb", "name": "샤오미 Redmi Note 13 Pro", "capacity": "512GB", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 399300, "common": 286000, "extra": 42900, "total": 328900, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "redminote14", "name": "샤오미 Redmi Note 14", "capacity": "미확인", "carriers": {"SKT": null, "KT": null, "LGU": {"list": 319000, "common": 286000, "extra": 42900, "total": 328900, "date": "2026-05-29"}}, "carrierCount": 1}, {"key": "14c", "name": "샤오미 레드미 14C", "capacity": "미확인", "carriers": {"SKT": null, "KT": {"list": 199100, "common": 190000, "extra": null, "total": null, "date": "2024.10.18"}, "LGU": null}, "carrierCount": 1}, {"key": "stylefolder32gb", "name": "스타일 폴더", "capacity": "32GB", "carriers": {"SKT": {"list": 237600, "common": 108000, "extra": 16200, "total": 124200, "date": "2022.12.09"}, "KT": null, "LGU": null}, "carrierCount": 1}, {"key": "stylefolder232gb", "name": "스타일 폴더2", "capacity": "32GB", "carriers": {"SKT": {"list": 237600, "common": 108000, "extra": 16200, "total": 124200, "date": "2025.01.24"}, "KT": null, "LGU": null}, "carrierCount": 1}, {"key": "", "name": "시나모롤 키즈폰", "capacity": "미확인", "carriers": {"SKT": null, "KT": {"list": 148500, "common": 147000, "extra": null, "total": null, "date": "2026.05.27"}, "LGU": null}, "carrierCount": 1}, {"key": "folder64gb", "name": "클래식 폴더", "capacity": "64GB", "carriers": {"SKT": null, "KT": {"list": 205700, "common": 150000, "extra": null, "total": null, "date": "2026.01.20"}, "LGU": null}, "carrierCount": 1}, {"key": "128gb", "name": "폼폼푸린 키즈폰", "capacity": "128GB", "carriers": {"SKT": null, "KT": {"list": 349800, "common": 150000, "extra": null, "total": null, "date": "2026.01.20"}, "LGU": null}, "carrierCount": 1}, {"key": "14c4gbram128gb", "name": "홍미 14C (4GB RAM)", "capacity": "128GB", "carriers": {"SKT": {"list": 149600, "common": 125000, "extra": 18800, "total": 143800, "date": "2024.10.18"}, "KT": null, "LGU": null}, "carrierCount": 1}], "plans": {"SKT": [{"group": "베스트(5G)", "name": "베스트 Max(T 우주)", "fee": 129000, "commitFee": 96750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 Pro(T 우주)", "fee": 119000, "commitFee": 89250, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 109(T 우주)", "fee": 109000, "commitFee": 81750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 99(T 우주)", "fee": 99000, "commitFee": 74250, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 89(T 우주)", "fee": 89000, "commitFee": 66750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 Max(스마트기기)", "fee": 129000, "commitFee": 96750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 Pro(스마트기기)", "fee": 119000, "commitFee": 89250, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 109(스마트기기)", "fee": 109000, "commitFee": 81750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 Max(Google AI)", "fee": 129000, "commitFee": 96750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 Pro(Google AI)", "fee": 119000, "commitFee": 89250, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 Max(유튜브 프리미엄)", "fee": 129000, "commitFee": 96750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 Pro(유튜브 프리미엄)", "fee": 119000, "commitFee": 89250, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 Max(넷플릭스)", "fee": 129000, "commitFee": 96750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 Pro(넷플릭스)", "fee": 119000, "commitFee": 89250, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 Max(티빙&웨이브)", "fee": 129000, "commitFee": 96750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 Pro(티빙&웨이브)", "fee": 119000, "commitFee": 89250, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 Max(디즈니+)", "fee": 129000, "commitFee": 96750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 Pro(디즈니+)", "fee": 119000, "commitFee": 89250, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 109(유튜브 프리미엄)", "fee": 109000, "commitFee": 81750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 109(넷플릭스)", "fee": 109000, "commitFee": 81750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 99(넷플릭스)", "fee": 99000, "commitFee": 74250, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 89(넷플릭스)", "fee": 89000, "commitFee": 66750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 109(티빙&웨이브)", "fee": 109000, "commitFee": 81750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 99(티빙&웨이브)", "fee": 99000, "commitFee": 74250, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 89(티빙&웨이브)", "fee": 89000, "commitFee": 66750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 109(디즈니+)", "fee": 109000, "commitFee": 81750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 99(디즈니+)", "fee": 99000, "commitFee": 74250, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "베스트(5G)", "name": "베스트 89(디즈니+)", "fee": 89000, "commitFee": 66750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 76(유튜브 프리미엄)", "fee": 76000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 76(넷플릭스)", "fee": 76000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 69(넷플릭스)", "fee": 69000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 62(넷플릭스)", "fee": 62000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "0 청년 다이렉트 69(넷플릭스)", "fee": 69000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "0 청년 다이렉트 62(넷플릭스)", "fee": 62000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 76(티빙)", "fee": 76000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 69(티빙)", "fee": 69000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "0 청년 다이렉트 69(티빙)", "fee": 69000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 76(디즈니+)", "fee": 76000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 69(디즈니+)", "fee": 69000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "0 청년 다이렉트 69(디즈니+)", "fee": 69000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 76(T 우주)", "fee": 76000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 69(T 우주)", "fee": 69000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "0 청년 다이렉트 69(T 우주)", "fee": 69000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 76(스마트기기)", "fee": 76000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 62", "fee": 62000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 55", "fee": 55000, "commitFee": null, "dataDesc": "250GB + 최대 5Mbps", "dataGB": 250.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 48", "fee": 48000, "commitFee": null, "dataDesc": "110GB + 최대 5Mbps", "dataGB": 110.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 42", "fee": 42000, "commitFee": null, "dataDesc": "24GB + 최대 1Mbps", "dataGB": 24.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 38", "fee": 38000, "commitFee": null, "dataDesc": "15GB + 최대 1Mbps", "dataGB": 15.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 34", "fee": 34000, "commitFee": null, "dataDesc": "11GB + 최대 400kbps", "dataGB": 11.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 31", "fee": 31000, "commitFee": null, "dataDesc": "8GB + 최대 400kbps", "dataGB": 8.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "다이렉트5G 27", "fee": 27000, "commitFee": null, "dataDesc": "6GB + 최대 400kbps", "dataGB": 6.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(LTE/무약정)", "name": "다이렉트LTE 22", "fee": 22000, "commitFee": null, "dataDesc": "1.8GB + 최대 400kbps", "dataGB": 1.8, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "0 청년 다이렉트 62", "fee": 62000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "0 청년 다이렉트 55", "fee": 55000, "commitFee": null, "dataDesc": "300GB + 최대 5Mbps", "dataGB": 300.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "0 청년 다이렉트 48", "fee": 48000, "commitFee": null, "dataDesc": "160GB + 최대 5Mbps", "dataGB": 160.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "0 청년 다이렉트 42", "fee": 42000, "commitFee": null, "dataDesc": "36GB + 최대 1Mbps", "dataGB": 36.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "0 청년 다이렉트 34", "fee": 34000, "commitFee": null, "dataDesc": "15GB + 최대 400kbps", "dataGB": 15.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "다이렉트(5G/무약정)", "name": "0 청년 다이렉트 30", "fee": 30000, "commitFee": null, "dataDesc": "8GB + 최대 400kbps", "dataGB": 8.0, "committable": false, "noCommitOnline": true, "niche": false}], "KT": [{"group": "통합-초이스", "name": "초이스130", "fee": 130000, "commitFee": 97500, "dataDesc": "무제한 (로밍 무제한 최대1Mbps)", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-초이스", "name": "초이스110", "fee": 110000, "commitFee": 82500, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-초이스", "name": "초이스90", "fee": 90000, "commitFee": 67500, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-초이스더블", "name": "초이스 더블", "fee": 120000, "commitFee": 90000, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직", "name": "베이직100", "fee": 100000, "commitFee": 75000, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직", "name": "베이직80", "fee": 80000, "commitFee": 60000, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직", "name": "베이직110GB", "fee": 69000, "commitFee": 51750, "dataDesc": "110GB+소진 후 5Mbps", "dataGB": 110.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직", "name": "베이직90GB", "fee": 67000, "commitFee": 50250, "dataDesc": "90GB+소진 후 1Mbps", "dataGB": 90.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직", "name": "베이직70GB", "fee": 65000, "commitFee": 48750, "dataDesc": "70GB+소진 후 1Mbps", "dataGB": 70.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직", "name": "베이직50GB", "fee": 63000, "commitFee": 47250, "dataDesc": "50GB+소진 후 1Mbps", "dataGB": 50.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직", "name": "베이직30GB", "fee": 61000, "commitFee": 45750, "dataDesc": "30GB+소진 후 1Mbps", "dataGB": 30.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직", "name": "베이직21GB", "fee": 58000, "commitFee": 43500, "dataDesc": "21GB+소진 후 1Mbps", "dataGB": 21.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직", "name": "베이직14GB", "fee": 55000, "commitFee": 41250, "dataDesc": "14GB+소진 후 1Mbps", "dataGB": 14.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직", "name": "베이직10GB", "fee": 50000, "commitFee": 37500, "dataDesc": "10GB+소진 후 400Kbps", "dataGB": 10.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직", "name": "베이직7GB", "fee": 45000, "commitFee": 33750, "dataDesc": "7GB+소진 후 400Kbps", "dataGB": 7.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직", "name": "베이직4GB", "fee": 37000, "commitFee": 27750, "dataDesc": "4GB+소진 후 400Kbps", "dataGB": 4.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직", "name": "베이직1.4GB", "fee": 33000, "commitFee": 24750, "dataDesc": "1.4GB+소진 후 400Kbps", "dataGB": 1.4, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직", "name": "베이직600MB", "fee": 28900, "commitFee": 21675, "dataDesc": "600MB+소진 후 400Kbps", "dataGB": 0.6, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직(이월)", "name": "베이직 21GB(이월)", "fee": 58000, "commitFee": 43500, "dataDesc": "21GB(+이월)", "dataGB": 21.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직(이월)", "name": "베이직 14GB(이월)", "fee": 55000, "commitFee": 41250, "dataDesc": "14GB(+이월)", "dataGB": 14.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직(이월)", "name": "베이직 10GB(이월)", "fee": 50000, "commitFee": 37500, "dataDesc": "10GB(+이월)", "dataGB": 10.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직(이월)", "name": "베이직 7GB(이월)", "fee": 45000, "commitFee": 33750, "dataDesc": "7GB(+이월)", "dataGB": 7.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-베이직(이월)", "name": "베이직 4GB(이월)", "fee": 37000, "commitFee": 27750, "dataDesc": "4GB(+이월)", "dataGB": 4.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합-음성", "name": "음성 18.7", "fee": 18700, "commitFee": 14025, "dataDesc": "-", "dataGB": 0.0, "committable": true, "noCommitOnline": false, "niche": true}, {"group": "통합-음성", "name": "음성 12.1", "fee": 12100, "commitFee": 9075, "dataDesc": "-", "dataGB": 0.0, "committable": true, "noCommitOnline": false, "niche": true}, {"group": "온라인전용(무약정)", "name": "요고 69", "fee": 69000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": false, "niche": false}, {"group": "온라인전용(무약정)", "name": "요고 61", "fee": 61000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": false, "niche": false}, {"group": "온라인전용(무약정)", "name": "요고 55", "fee": 55000, "commitFee": null, "dataDesc": "200GB+소진 후 5Mbps", "dataGB": 200.0, "committable": false, "noCommitOnline": false, "niche": false}, {"group": "온라인전용(무약정)", "name": "요고 49", "fee": 49000, "commitFee": null, "dataDesc": "120GB+소진 후 5Mbps", "dataGB": 120.0, "committable": false, "noCommitOnline": false, "niche": false}, {"group": "온라인전용(무약정)", "name": "요고 46", "fee": 46000, "commitFee": null, "dataDesc": "80GB+소진 후 1Mbps", "dataGB": 80.0, "committable": false, "noCommitOnline": false, "niche": false}, {"group": "온라인전용(무약정)", "name": "요고 44", "fee": 44000, "commitFee": null, "dataDesc": "40GB+소진 후 1Mbps", "dataGB": 40.0, "committable": false, "noCommitOnline": false, "niche": false}, {"group": "온라인전용(무약정)", "name": "요고 42", "fee": 42000, "commitFee": null, "dataDesc": "35GB+소진 후 1Mbps", "dataGB": 35.0, "committable": false, "noCommitOnline": false, "niche": false}, {"group": "온라인전용(무약정)", "name": "요고 40", "fee": 40000, "commitFee": null, "dataDesc": "30GB+소진 후 1Mbps", "dataGB": 30.0, "committable": false, "noCommitOnline": false, "niche": false}, {"group": "온라인전용(무약정)", "name": "요고 38", "fee": 38000, "commitFee": null, "dataDesc": "25GB+소진 후 1Mbps", "dataGB": 25.0, "committable": false, "noCommitOnline": false, "niche": false}, {"group": "온라인전용(무약정)", "name": "요고 36", "fee": 36000, "commitFee": null, "dataDesc": "20GB+소진 후 1Mbps", "dataGB": 20.0, "committable": false, "noCommitOnline": false, "niche": false}, {"group": "온라인전용(무약정)", "name": "요고 34", "fee": 34000, "commitFee": null, "dataDesc": "15GB+소진 후 400Kbps", "dataGB": 15.0, "committable": false, "noCommitOnline": false, "niche": false}, {"group": "온라인전용(무약정)", "name": "요고 32", "fee": 32000, "commitFee": null, "dataDesc": "10GB+소진 후 400Kbps", "dataGB": 10.0, "committable": false, "noCommitOnline": false, "niche": false}, {"group": "온라인전용(무약정)", "name": "요고 30", "fee": 30000, "commitFee": null, "dataDesc": "8GB+소진 후 400Kbps", "dataGB": 8.0, "committable": false, "noCommitOnline": false, "niche": false}], "LGU": [{"group": "통합(5G/LTE)", "name": "플러스플랜130", "fee": 130000, "commitFee": 97500, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "플러스플랜115", "fee": 115000, "commitFee": 86250, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "플러스플랜105", "fee": 105000, "commitFee": 78750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "플러스플랜95", "fee": 95000, "commitFee": 71250, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "데이터플랜MAX", "fee": 85000, "commitFee": 63750, "dataDesc": "무제한", "dataGB": null, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "데이터플랜150GB", "fee": 75000, "commitFee": 56250, "dataDesc": "150GB+소진 후 5Mbps", "dataGB": 150.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "데이터플랜125GB", "fee": 70000, "commitFee": 52500, "dataDesc": "125GB+소진 후 5Mbps", "dataGB": 125.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "데이터플랜95GB", "fee": 68000, "commitFee": 51000, "dataDesc": "95GB+소진 후 3Mbps", "dataGB": 95.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "데이터플랜80GB", "fee": 66000, "commitFee": 49500, "dataDesc": "80GB+소진 후 1Mbps", "dataGB": 80.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "데이터플랜50GB", "fee": 63000, "commitFee": 47250, "dataDesc": "50GB+소진 후 1Mbps", "dataGB": 50.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "데이터플랜31GB", "fee": 61000, "commitFee": 45750, "dataDesc": "31GB+소진 후 1Mbps", "dataGB": 31.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "데이터플랜24GB", "fee": 59000, "commitFee": 44250, "dataDesc": "24GB+소진 후 1Mbps", "dataGB": 24.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "데이터플랜14GB", "fee": 55000, "commitFee": 41250, "dataDesc": "14GB+소진 후 1Mbps", "dataGB": 14.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "데이터플랜9GB", "fee": 47000, "commitFee": 35250, "dataDesc": "9GB+소진 후 400Kbps", "dataGB": 9.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "데이터플랜5GB", "fee": 37000, "commitFee": 27750, "dataDesc": "5GB+소진 후 400Kbps", "dataGB": 5.0, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "데이터플랜1.5GB", "fee": 33000, "commitFee": 24750, "dataDesc": "1.5GB+소진 후 400Kbps", "dataGB": 1.5, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "데이터플랜750MB", "fee": 29000, "commitFee": 21750, "dataDesc": "750MB+소진 후 400Kbps", "dataGB": 0.75, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "통합(5G/LTE)", "name": "데이터플랜300MB", "fee": 28000, "commitFee": 21000, "dataDesc": "300MB+소진 후 400Kbps", "dataGB": 0.3, "committable": true, "noCommitOnline": false, "niche": false}, {"group": "너겟(온라인 전용/무약정)", "name": "너겟75", "fee": 75000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "너겟(온라인 전용/무약정)", "name": "너겟69", "fee": 69000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "너겟(온라인 전용/무약정)", "name": "너겟65", "fee": 65000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "너겟(온라인 전용/무약정)", "name": "너겟59", "fee": 59000, "commitFee": null, "dataDesc": "무제한", "dataGB": null, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "너겟(온라인 전용/무약정)", "name": "너겟49", "fee": 49000, "commitFee": null, "dataDesc": "120GB+소진 후 5Mbps", "dataGB": 120.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "너겟(온라인 전용/무약정)", "name": "너겟46", "fee": 46000, "commitFee": null, "dataDesc": "81GB+소진 후 3Mbps", "dataGB": 81.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "너겟(온라인 전용/무약정)", "name": "너겟43", "fee": 43000, "commitFee": null, "dataDesc": "40GB+소진 후 1Mbps", "dataGB": 40.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "너겟(온라인 전용/무약정)", "name": "너겟39", "fee": 39000, "commitFee": null, "dataDesc": "27GB+소진 후 1Mbps", "dataGB": 27.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "너겟(온라인 전용/무약정)", "name": "너겟36", "fee": 36000, "commitFee": null, "dataDesc": "20GB+소진 후 1Mbps", "dataGB": 20.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "너겟(온라인 전용/무약정)", "name": "너겟33", "fee": 33000, "commitFee": null, "dataDesc": "12GB+소진 후 400Kbps", "dataGB": 12.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "너겟(온라인 전용/무약정)", "name": "너겟26", "fee": 26000, "commitFee": null, "dataDesc": "6GB+소진 후 400Kbps", "dataGB": 6.0, "committable": false, "noCommitOnline": true, "niche": false}, {"group": "LTE", "name": "현역병사 데이터 33", "fee": 33000, "commitFee": 24750, "dataDesc": "월2GB+매일2GB, 소진 후 3Mbps", "dataGB": 2.0, "committable": true, "noCommitOnline": false, "niche": true}, {"group": "LTE", "name": "LTE 키즈 22", "fee": 22000, "commitFee": 16500, "dataDesc": "700MB+소진 후 400Kbps", "dataGB": 0.7, "committable": true, "noCommitOnline": false, "niche": true}, {"group": "LTE", "name": "LTE 시니어 16.5", "fee": 16500, "commitFee": 12375, "dataDesc": "300MB+소진 후 400Kbps", "dataGB": 0.3, "committable": true, "noCommitOnline": false, "niche": true}, {"group": "LTE", "name": "LTE 표준", "fee": 11990, "commitFee": 8993, "dataDesc": "1KB당 0.275원(종량)", "dataGB": -1, "committable": true, "noCommitOnline": false, "niche": true}]}, "refPlanFee": {"SKT": 109000, "KT": 90000, "LGU": 95000}, "refPlanName": {"SKT": "베스트 109(T 우주)", "KT": "초이스90(유튜브 프리미엄)", "LGU": "플러스플랜95"}};
+const CARRIER_META = {
+  SKT: {name:'SKT', color:'#E4002B'},
+  KT: {name:'KT', color:'#00968F'},
+  LGU: {name:'LG U+', color:'#9C0080'},
+};
+const CARRIER_ORDER = ['SKT','KT','LGU'];
+
+// ---------- 모델/용량 2단계 선택 (3사 중 2곳 이상 비교가능한 모델만) ----------
+const COMPARABLE = DATA.phones.filter(p => p.carrierCount >= 2);
+const modelNames = [...new Set(COMPARABLE.map(p=>p.name))].sort((a,b)=>a.localeCompare(b,'ko'));
+
+const modelSelect = document.getElementById('modelSelect');
+const capacitySelect = document.getElementById('capacitySelect');
+let selectedPhone = null;
+
+function parseCapNum(cap){
+  const m = /([\d.]+)\s*(TB|GB)/i.exec(cap || '');
+  if (!m) return 0;
+  let v = parseFloat(m[1]);
+  if (m[2].toUpperCase() === 'TB') v *= 1024;
+  return v;
+}
+
+modelSelect.innerHTML = modelNames.map(n => `<option value="${n}">${n}</option>`).join('');
+
+function populateCapacities(name, preferKey){
+  const list = COMPARABLE.filter(p => p.name === name).sort((a,b)=>parseCapNum(a.capacity)-parseCapNum(b.capacity));
+  capacitySelect.innerHTML = list.map(p => `<option value="${p.key}">${p.capacity}</option>`).join('');
+  if (preferKey && list.some(p=>p.key===preferKey)) capacitySelect.value = preferKey;
+  selectedPhone = COMPARABLE.find(p => p.key === capacitySelect.value);
+}
+
+modelSelect.addEventListener('change', () => populateCapacities(modelSelect.value));
+capacitySelect.addEventListener('change', () => {
+  selectedPhone = COMPARABLE.find(p => p.key === capacitySelect.value);
+});
+
+// 기본값: 3사 모두 비교 가능한 첫 모델
+const defaultPhone = COMPARABLE.find(p => p.carrierCount === 3) || COMPARABLE[0];
+modelSelect.value = defaultPhone.name;
+populateCapacities(defaultPhone.name, defaultPhone.key);
+
+// ---------- 예산 스테퍼 (만원 단위) ----------
+let budgetManwon = 10;
+const budgetValEl = document.getElementById('budgetVal');
+function renderBudget(){ budgetValEl.textContent = budgetManwon; }
+document.getElementById('budgetMinus').addEventListener('click', ()=>{ budgetManwon = Math.max(1, budgetManwon-1); renderBudget(); });
+document.getElementById('budgetPlus').addEventListener('click', ()=>{ budgetManwon = Math.min(50, budgetManwon+1); renderBudget(); });
+renderBudget();
+
+// ---------- 요금제 선택 로직 ----------
+function generalPlans(carrierId){
+  return DATA.plans[carrierId].filter(p => p.committable && !p.niche && !p.noCommitOnline);
+}
+
+function pickPlan(carrierId, budget, usageGB, unlimited, criterion){
+  const pool = generalPlans(carrierId);
+  let dataFiltered = pool.filter(p=>{
+    if (unlimited) return p.dataGB === null;
+    if (p.dataGB === null) return true;
+    if (p.dataGB === -1) return false;
+    return p.dataGB >= usageGB;
+  });
+  let base = dataFiltered.length ? dataFiltered : pool;
+  let inBudget = base.filter(p => p.fee <= budget);
+  let overBudget = inBudget.length === 0;
+  let finalPool = inBudget.length ? inBudget : base;
+
+  let chosen;
+  if (criterion === 'data') {
+    chosen = finalPool.reduce((a,b)=>{
+      const av = a.dataGB===null ? Infinity : a.dataGB;
+      const bv = b.dataGB===null ? Infinity : b.dataGB;
+      if (bv > av) return b;
+      if (bv < av) return a;
+      return a;
+    });
+  } else if (criterion === 'benefit') {
+    const premiumKeys = ['베스트','초이스','플러스플랜'];
+    const premium = finalPool.filter(p => premiumKeys.some(k => p.group.includes(k) || p.name.includes(k)));
+    const usePool = premium.length ? premium : finalPool;
+    chosen = usePool.reduce((a,b)=> b.fee > a.fee ? b : a);
+  } else { // price
+    chosen = finalPool.reduce((a,b)=> b.fee < a.fee ? b : a);
+  }
+  return {chosen, overBudget};
+}
+
+function estimateSubsidy(carrierData, refFee, chosenFee){
+  const ratio = Math.min(chosenFee / refFee, 1);
+  const scaled = chosenFee < refFee;
+  const common = Math.round(carrierData.common * ratio / 1000) * 1000;
+  let extra = null;
+  if (carrierData.extra !== null && carrierData.extra !== undefined) {
+    extra = Math.round(carrierData.extra * ratio / 1000) * 1000;
+  }
+  return {common, extra, scaled, hasExtra: carrierData.extra !== null && carrierData.extra !== undefined};
+}
+
+function buildResult(carrierId, phone, chosen, overBudget, auto){
+  const carrierData = phone.carriers[carrierId];
+  const refFee = DATA.refPlanFee[carrierId];
+  const sub = estimateSubsidy(carrierData, refFee, chosen.fee);
+  const totalSubsidy = sub.common + (sub.extra || 0);
+  const devicePrice = Math.max(0, carrierData.list - totalSubsidy);
+  const commitFee = (chosen.commitFee !== null && chosen.commitFee !== undefined) ? chosen.commitFee : Math.round(chosen.fee*0.75);
+  const costSubsidyMethod = chosen.fee * 24 + devicePrice;
+  const costCommitMethod = commitFee * 24 + carrierData.list;
+  const method = costSubsidyMethod <= costCommitMethod ? 'subsidy' : 'commit';
+  const total = Math.min(costSubsidyMethod, costCommitMethod);
+  const monthlyPlanFee = method === 'subsidy' ? chosen.fee : commitFee;
+  const monthlyInstallment = Math.round((method === 'subsidy' ? devicePrice : carrierData.list) / 24);
+  const monthlyTotal = monthlyPlanFee + monthlyInstallment;
+  return {
+    carrierId, plan: chosen, overBudget, auto, sub, totalSubsidy, devicePrice,
+    costSubsidyMethod, costCommitMethod, method, total, listPrice: carrierData.list, refFee,
+    monthlyPlanFee, monthlyInstallment, monthlyTotal,
+  };
+}
+
+const planOverride = {SKT:null, KT:null, LGU:null};
+
+function computeForCarrier(carrierId, phone, inputs){
+  const carrierData = phone.carriers[carrierId];
+  if (!carrierData) return null;
+  const overrideName = planOverride[carrierId];
+  if (overrideName) {
+    const chosen = DATA.plans[carrierId].find(p => p.name === overrideName);
+    if (chosen) return buildResult(carrierId, phone, chosen, false, false);
+  }
+  const {chosen, overBudget} = pickPlan(carrierId, inputs.budget, inputs.usage, inputs.unlimited, inputs.criterion);
+  return buildResult(carrierId, phone, chosen, overBudget, true);
+}
+
+function fmt(n){ return n.toLocaleString('ko-KR') + '원'; }
+function collectInputs(){
+  return {
+    budget: budgetManwon * 10000,
+    usage: parseFloat(document.getElementById('usage').value) || 0,
+    unlimited: document.getElementById('unlimited').checked,
+    criterion: document.getElementById('criterion').value,
+    joinType: document.getElementById('joinType').value,
+  };
+}
+
+let lastInputs = null;
+
+function planOptionsHtml(carrierId, currentPlanName){
+  const plans = [...generalPlans(carrierId)].sort((a,b)=>b.fee-a.fee);
+  return plans.map(p=>{
+    const label = `${p.name} · ${p.fee.toLocaleString()}원 · ${p.dataDesc}`;
+    return `<option value="${p.name}" ${p.name===currentPlanName?'selected':''}>${label}</option>`;
+  }).join('');
+}
+
+function renderAll(){
+  if (!lastInputs) return;
+  const inputs = lastInputs;
+  const results = {};
+  CARRIER_ORDER.forEach(c => { results[c] = computeForCarrier(c, selectedPhone, inputs); });
+  const valid = CARRIER_ORDER.filter(c => results[c]);
+  if (!valid.length) return;
+  const ranked = [...valid].sort((a,b)=>results[a].total - results[b].total);
+  const winner = ranked[0];
+  const rankOf = {}; ranked.forEach((c,i)=> rankOf[c] = i+1);
+
+  // 배너
+  const wm = CARRIER_META[winner];
+  const wr = results[winner];
+  document.getElementById('winnerBanner').innerHTML = `
+    <div class="winner-banner">
+      <div class="trophy">🏆</div>
+      <div class="txt">
+        <b>${wm.name}</b> 조합이 24개월 기준 예상 총비용이 가장 낮습니다 · <span class="amt">${fmt(wr.total)}</span>
+        <div class="detail">${selectedPhone.name} ${selectedPhone.capacity} · ${inputs.joinType} · ${wr.plan.name} · ${wr.method==='subsidy'?'공시지원금':'선택약정'} 방식 기준</div>
+      </div>
+    </div>`;
+
+  // 총비용 미니 바차트
+  const maxTotal = Math.max(...valid.map(c=>results[c].total));
+  document.getElementById('costChart').innerHTML = CARRIER_ORDER.map(c=>{
+    const meta = CARRIER_META[c];
+    const r = results[c];
+    if (!r) return `<div class="cc-row"><div class="cc-label">${meta.name}</div><div class="cc-track"></div></div>`;
+    const pct = (r.total/maxTotal*100).toFixed(1);
+    return `<div class="cc-row">
+      <div class="cc-label">${meta.name}</div>
+      <div class="cc-track"><div class="cc-fill" style="width:${pct}%; background:${meta.color};"><span>${fmt(r.total)}</span></div></div>
+    </div>`;
+  }).join('');
+
+  // 카드
+  const cardsRow = document.getElementById('cardsRow');
+  cardsRow.innerHTML = CARRIER_ORDER.map(c=>{
+    const meta = CARRIER_META[c];
+    const r = results[c];
+    if (!r) {
+      return `<div class="carrier-card" style="border-top-color:${meta.color}">
+        <div class="cname"><span class="cdot" style="background:${meta.color}"></span>${meta.name}</div>
+        <div class="na">이 모델은 ${meta.name}에서 판매/공시 데이터가 확인되지 않습니다(해당없음).</div>
+      </div>`;
+    }
+    const isBest = c === winner;
+    const rank = rankOf[c];
+    const rankLabel = rank===1?'1위 · 최적 추천':rank===2?'2위':'3위';
+    const rankCls = rank===1?'rank-1':rank===2?'rank-2':'rank-3';
+    const extraTxt = r.sub.hasExtra ? fmt(r.sub.extra) + (r.sub.scaled?' <span class="est-flag">추정</span>':'') : '미표시(0원 처리 안 함)';
+    return `<div class="carrier-card ${isBest?'best':''}" style="border-top-color:${meta.color}">
+      <div class="rank-badge ${rankCls}">${rankLabel}</div>
+      <div class="cname"><span class="cdot" style="background:${meta.color}"></span>${meta.name}</div>
+      <div class="plan-select-wrap">
+        <label>요금제 선택</label>
+        <select class="plan-select" data-carrier="${c}">
+          <option value="__auto__" ${r.auto?'selected':''}>자동 추천 요금제 사용</option>
+          ${planOptionsHtml(c, r.auto?null:r.plan.name)}
+        </select>
+        <div class="plan-fee-note">${r.plan.dataDesc}${r.overBudget?' · <span style="color:#8A5A00">예산 초과</span>':''}</div>
+      </div>
+      <div class="kv"><span class="k">공통지원금</span><span class="v">${fmt(r.sub.common)}${r.sub.scaled?' <span class="est-flag">추정</span>':''}</span></div>
+      <div class="kv"><span class="k">추가지원금</span><span class="v">${extraTxt}</span></div>
+      <div class="kv"><span class="k">출고가</span><span class="v">${fmt(r.listPrice)}</span></div>
+      <div class="kv"><span class="k">단말 구매가(지원금 적용)</span><span class="v">${fmt(r.devicePrice)}</span></div>
+      <div class="monthly-box">
+        <span class="k">예상 월 요금</span>
+        <span class="v">${fmt(r.monthlyTotal)}</span>
+      </div>
+      <div class="total-cost">
+        <div class="k">24개월 예상 총비용 (${r.method==='subsidy'?'공시지원금':'선택약정'} 방식)</div>
+        <div class="v" style="color:${meta.color}">${fmt(r.total)}</div>
+        <div class="method">공시지원금 방식 ${fmt(r.costSubsidyMethod)} · 선택약정 방식 ${fmt(r.costCommitMethod)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // 비교표
+  const tbody = document.querySelector('#compareTable tbody');
+  tbody.innerHTML = CARRIER_ORDER.map(c=>{
+    const meta = CARRIER_META[c];
+    const r = results[c];
+    if (!r) return `<tr><td>${meta.name}</td><td colspan="6" style="text-align:center; color:#7A8087;">해당없음</td></tr>`;
+    const isBest = c === winner;
+    return `<tr>
+      <td style="font-weight:900; color:${meta.color}">${meta.name}</td>
+      <td>${r.plan.name}</td>
+      <td>${r.plan.fee.toLocaleString()}원</td>
+      <td>${fmt(r.totalSubsidy)}${r.sub.scaled?' (추정)':''}</td>
+      <td>${fmt(r.devicePrice)}</td>
+      <td>${r.method==='subsidy'?'공시지원금':'선택약정'}</td>
+      <td class="${isBest?'hl':''}">${fmt(r.total)}</td>
+    </tr>`;
+  }).join('');
+
+  // 추천 근거
+  const reasons = [];
+  const criterionLabel = {price:'가격 최우선',data:'데이터 최우선',benefit:'혜택 우선'}[inputs.criterion];
+  reasons.push(`${selectedPhone.name} ${selectedPhone.capacity} 기준, 선택하신 예산(${(inputs.budget).toLocaleString()}원)·${inputs.unlimited?'무제한 데이터':inputs.usage+'GB'} 사용량·${criterionLabel} 조건에서 3사의 24개월 예상 총비용을 비교했습니다.`);
+  if (valid.length > 1) {
+    const gap = results[ranked[1]].total - results[ranked[0]].total;
+    reasons.push(`${CARRIER_META[ranked[0]].name}이(가) 2위(${CARRIER_META[ranked[1]].name})보다 약 ${fmt(gap)} 더 저렴한 것으로 계산되었습니다.`);
+  }
+  reasons.push(`가입유형(${inputs.joinType})은 3사 모두 지원금 차이가 없어(단통법상 차등 지급 금지) 이 비교 결과에 영향을 주지 않습니다.`);
+  const anyScaled = valid.some(c=>results[c].sub.scaled);
+  if (anyScaled) reasons.push(`선택된 요금제 월정액이 지원금 수집 기준 요금제보다 낮은 통신사는 지원금을 비례 추정했습니다(<span class="est-flag">추정</span> 표시 참고) — 실제 금액과 다를 수 있습니다.`);
+  if (results.KT) reasons.push(`KT는 추가지원금이 목록 화면에 공개되지 않아 계산에서 제외했습니다 — KT의 실제 구매가는 이 결과보다 더 낮을 수 있습니다.`);
+  const anyManual = CARRIER_ORDER.some(c=>planOverride[c]);
+  if (anyManual) reasons.push(`요금제를 직접 변경한 통신사가 있습니다 — 해당 통신사는 자동 추천이 아닌 직접 선택한 요금제 기준으로 계산되었습니다.`);
+  document.getElementById('reasonList').innerHTML = reasons.map(r=>`<li>${r}</li>`).join('');
+
+  document.getElementById('resultArea').style.display = 'block';
+}
+
+document.getElementById('calcBtn').addEventListener('click', ()=>{
+  planOverride.SKT = null; planOverride.KT = null; planOverride.LGU = null;
+  lastInputs = collectInputs();
+  renderAll();
+  document.getElementById('resultArea').scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+document.getElementById('cardsRow').addEventListener('change', (e)=>{
+  if (!e.target.classList.contains('plan-select')) return;
+  const carrierId = e.target.dataset.carrier;
+  const val = e.target.value;
+  planOverride[carrierId] = (val === '__auto__') ? null : val;
+  renderAll();
+});
+
+document.getElementById('unlimited').addEventListener('change', (e)=>{
+  document.getElementById('usage').disabled = e.target.checked;
+});
+document.getElementById('usage').disabled = document.getElementById('unlimited').checked;
+
+// 최초 자동 실행
+lastInputs = collectInputs();
+renderAll();
+</script>
+</body>
+</html>

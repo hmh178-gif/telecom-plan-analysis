@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3사 휴대폰 지원금 비교 인사이트 리포트</title>
+<style>
+  @font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2/PretendardVariable.woff2') format('woff2-variations');
+    font-weight: 100 900;
+  }
+  :root{
+    --skt:#E4002B; --skt-bg:#FDECEE;
+    --lgu:#9C0080; --lgu-bg:#F6E8F4;
+    --kt:#00968F;  --kt-bg:#E4F5F3; --kt-black:#1A1A1A;
+    --ink:#12151A; --ink-soft:#30353B; --ink-muted:#5C6268;
+    --surface:#FCFCFB; --panel:#FFFFFF; --border:#E6E5E2;
+    --warn-bg:#FFF6E5; --warn-ink:#7A4E00;
+    --good-ink:#146C2E;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Pretendard', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+    background:linear-gradient(180deg,#F4F4F2 0%, #FCFCFB 320px);
+    color:var(--ink);
+    line-height:1.62;
+    padding:0 0 64px 0;
+  }
+  .wrap{max-width:920px; margin:0 auto; padding:0 24px;}
+  header.hero{
+    padding:56px 24px 40px;
+    max-width:920px; margin:0 auto;
+  }
+  .eyebrow{
+    font-size:13px; font-weight:600; letter-spacing:.04em; color:var(--ink-muted);
+    text-transform:uppercase; margin-bottom:14px;
+  }
+  h1{font-size:33px; font-weight:900; margin:0 0 12px; letter-spacing:-.015em; color:var(--ink);}
+  .sub{font-size:15.5px; font-weight:500; color:var(--ink-soft); max-width:640px;}
+  .meta-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;}
+  .chip{
+    font-size:12.5px; font-weight:700; padding:6px 12px; border-radius:100px;
+    background:var(--panel); border:1px solid var(--border); color:var(--ink-soft);
+  }
+  .disclaimer{
+    background:var(--warn-bg); border:1px solid #F0DBA6; color:var(--warn-ink);
+    border-radius:12px; padding:16px 18px; font-size:13.5px; font-weight:500; line-height:1.6;
+    margin-top:24px;
+  }
+  .disclaimer b{color:#5c3c00; font-weight:800;}
+
+  section{max-width:920px; margin:0 auto; padding:36px 24px 0;}
+  .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:16px;
+    padding:28px 28px 30px;
+  }
+  h2{
+    font-size:21px; font-weight:900; margin:0 0 6px; display:flex; align-items:center; gap:10px;
+    color:var(--ink); letter-spacing:-.01em;
+  }
+  .num-badge{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:27px; height:27px; border-radius:8px; background:var(--ink); color:#fff;
+    font-size:13px; font-weight:800; flex:none;
+  }
+  .section-desc{font-size:14px; font-weight:600; color:var(--ink-muted); margin:0 0 22px;}
+  p.body-text{font-size:14.5px; font-weight:500; color:var(--ink-soft); margin:10px 0;}
+  .fact{font-size:14.5px; color:var(--ink); background:#F5F6F5; border-radius:10px; padding:12px 14px; margin:10px 0;}
+  .caveat{
+    font-size:13px; font-weight:500; color:var(--ink-muted); border-left:3px solid #D8D6D0; padding:8px 0 8px 12px; margin:12px 0;
+  }
+  .caveat b{color:var(--ink-soft); font-weight:800;}
+
+  /* stat tiles */
+  .stat-row{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:18px 0 6px;}
+  .stat-tile{
+    border:1px solid var(--border); border-radius:12px; padding:16px 14px; text-align:left;
+  }
+  .stat-tile .label{font-size:12.5px; color:var(--ink-muted); font-weight:700; margin-bottom:6px;}
+  .stat-tile .value{font-size:25px; font-weight:900; color:var(--ink);}
+  .stat-tile .foot{font-size:12px; font-weight:500; color:var(--ink-muted); margin-top:4px;}
+
+  /* TL;DR 핵심 결론 */
+  .tldr-wrap{max-width:920px; margin:0 auto; padding:28px 24px 0;}
+  .tldr-head{font-size:13px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:#fff; opacity:.85; margin-bottom:14px;}
+  .tldr-panel{
+    background:linear-gradient(135deg,#181B1F 0%, #262B31 100%);
+    border-radius:20px; padding:30px 28px 26px; color:#fff;
+  }
+  .tldr-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:4px;}
+  .tldr-card{
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+    border-radius:14px; padding:18px 18px 16px;
+  }
+  .tldr-card .big{font-size:30px; font-weight:900; letter-spacing:-.02em; line-height:1.1; margin-bottom:8px;}
+  .tldr-card .big .unit{font-size:16px; font-weight:700; opacity:.8; margin-left:2px;}
+  .tldr-card .headline{font-size:14.5px; font-weight:800; margin-bottom:6px;}
+  .tldr-card .note{font-size:12.5px; font-weight:500; color:rgba(255,255,255,.72); line-height:1.55;}
+  @media (max-width:640px){ .tldr-grid{grid-template-columns:1fr;} }
+
+  /* carrier bars */
+  .bar-chart{margin:22px 0 8px;}
+  .bar-row{display:flex; align-items:center; gap:14px; margin:14px 0;}
+  .bar-label{width:88px; flex:none; font-size:13.5px; font-weight:800; color:var(--ink); display:flex; align-items:center; gap:6px;}
+  .dot{width:9px; height:9px; border-radius:50%; flex:none;}
+  .bar-track{flex:1; background:#EFEFEC; border-radius:8px; height:26px; position:relative; overflow:hidden;}
+  .bar-fill{height:100%; border-radius:8px; display:flex; align-items:center; justify-content:flex-end; padding-right:10px; transition:width .3s;}
+  .bar-fill span{font-size:12.5px; font-weight:700; color:#fff;}
+  .legend-row{display:flex; gap:18px; font-size:12.5px; color:var(--ink-muted); margin-top:6px; flex-wrap:wrap;}
+  .legend-item{display:flex; align-items:center; gap:6px;}
+
+  /* match rate chart */
+  .match-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px;}
+  .match-card{border:1px solid var(--border); border-radius:14px; padding:18px; text-align:center;}
+  .match-card .brand{font-size:13.5px; font-weight:800; color:var(--ink); margin-bottom:10px;}
+  .ring-wrap{position:relative; width:120px; height:120px; margin:0 auto 10px;}
+  .ring-pct{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:900; color:var(--ink);}
+  .match-card .cnt{font-size:12.5px; font-weight:600; color:var(--ink-muted);}
+
+  table{width:100%; border-collapse:collapse; margin-top:16px; font-size:13px; font-weight:600;}
+  th,td{padding:9px 10px; text-align:right; border-bottom:1px solid var(--border);}
+  th:first-child,td:first-child{text-align:left;}
+  th{color:var(--ink-muted); font-weight:800; font-size:12px; text-transform:uppercase; letter-spacing:.02em;}
+  td.model-name{font-weight:700; color:var(--ink);}
+  tr:last-child td{border-bottom:none;}
+  .tag-skt{color:var(--skt); font-weight:700;}
+  .tag-kt{color:var(--kt); font-weight:700;}
+  .tag-lgu{color:var(--lgu); font-weight:700;}
+
+  .callout{
+    border-radius:14px; padding:20px 22px; margin-top:16px;
+    background:#F6F5F2; border:1px solid var(--border);
+  }
+  .callout .timeline{display:flex; flex-direction:column; gap:10px; margin-top:14px;}
+  .tl-item{display:grid; grid-template-columns:70px 1fr; gap:12px; font-size:13.5px; font-weight:500; align-items:baseline;}
+  .tl-carrier{font-weight:900; font-size:13px;}
+  .tl-detail{color:var(--ink-soft);}
+  .tl-detail b{color:var(--ink); font-weight:800;}
+
+  ul.clean{margin:10px 0; padding-left:20px;}
+  ul.clean li{font-size:14px; font-weight:500; color:var(--ink-soft); margin:6px 0;}
+
+  footer{max-width:920px; margin:40px auto 0; padding:24px 24px 0; font-size:12.5px; color:var(--ink-muted); border-top:1px solid var(--border);}
+
+  @media (max-width:640px){
+    .stat-row{grid-template-columns:1fr;}
+    .match-grid{grid-template-columns:1fr;}
+    h1{font-size:24px;}
+    .bar-label{width:64px; font-size:12px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="eyebrow">SKT · KT · LG U+ 지원금 비교 분석</div>
+  <h1>3사 휴대폰 공시지원금, 왜 다를까</h1>
+  <p class="sub">2026년 8월 수집한 SKT·KT·LG U+ 휴대폰 지원금 데이터를 기준으로, 통신사 간 지원금 차이를 데이터로 확인한 결과를 정리했습니다.</p>
+  <div class="meta-row">
+    <span class="chip">수집일 2026-08-14</span>
+    <span class="chip">비교가능 모델 66건</span>
+    <span class="chip">3사 동시비교 51건</span>
+    <span class="chip">기기변경 기준(3사 동일)</span>
+  </div>
+  <div class="disclaimer">
+    <b>읽기 전에.</b> 이 리포트의 모든 해석은 이번에 수집한 지원금 데이터 자체에서 확인되는 수치와 상관관계만을 근거로 합니다. 통신사·제조사의 내부 정책 문서를 확인한 내용이 아니므로, 관찰된 패턴의 <b>원인</b>에 대한 설명은 모두 추측이며 확정된 사실이 아닙니다. 확인되지 않은 부분은 그대로 "모르겠습니다"로 표시했습니다.
+  </div>
+</header>
+
+<div class="tldr-wrap">
+  <div class="tldr-panel">
+    <div class="tldr-head">한눈에 보는 결론 3가지</div>
+    <div class="tldr-grid">
+      <div class="tldr-card">
+        <div class="big">89% <span class="unit">vs 35%</span></div>
+        <div class="headline">① 갤럭시는 3사가 거의 같고, 아이폰은 다르다</div>
+        <div class="note">갤럭시는 28건 중 25건(89%)이 3사 동일 금액, 아이폰은 23건 중 8건(35%)만 동일 — 아이폰을 살 땐 통신사 비교가 특히 중요합니다.</div>
+      </div>
+      <div class="tldr-card">
+        <div class="big">0<span class="unit">원 차이</span></div>
+        <div class="headline">② 가입유형은 지원금과 무관</div>
+        <div class="note">번호이동·기기변경·신규가입 3가지 모두 동일 금액 — 단통법상 가입유형별 차등 지급이 금지되어 있기 때문으로 추정됩니다.</div>
+      </div>
+      <div class="tldr-card">
+        <div class="big">35<span class="unit">% 불일치</span></div>
+        <div class="headline">③ 51개 모델 중 18개는 3사 금액이 다름</div>
+        <div class="note">특히 iPhone 16 시리즈는 SKT 22만원 vs KT 60만원으로 최대 38만원까지 차이납니다.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section>
+<div class="card">
+  <h2><span class="num-badge">1</span>비교 대상 개요</h2>
+  <p class="section-desc">3사 사이트에서 수집한 전체 133개 모델·용량 조합 중, 실제로 통신사 간 비교가 가능한 범위는 이렇습니다.</p>
+  <div class="stat-row">
+    <div class="stat-tile">
+      <div class="label">전체 모델·용량 조합</div>
+      <div class="value">133건</div>
+      <div class="foot">SKT/KT/LG U+ 통합 정규화 기준</div>
+    </div>
+    <div class="stat-tile">
+      <div class="label">2사 이상 비교가능</div>
+      <div class="value">66건</div>
+      <div class="foot">1개 통신사 단독 판매 67건은 비교 제외</div>
+    </div>
+    <div class="stat-tile">
+      <div class="label">3사 모두 비교가능</div>
+      <div class="value">51건</div>
+      <div class="foot">이하 통계는 이 51건 기준(기기변경·공통지원금)</div>
+    </div>
+  </div>
+  <p class="caveat"><b>주의.</b> 아래 수치는 이번에 수집한 상품군 안에서의 단순 평균·비율이며, 국내 휴대폰 시장 전체를 대표하는 값은 아닙니다.</p>
+</div>
+</section>
+
+<section>
+<div class="card">
+  <h2><span class="num-badge">2</span>통신사별 평균 공통지원금</h2>
+  <p class="section-desc">3사 모두 비교 가능한 51개 모델의 공통지원금 단순 평균입니다(기기변경 기준).</p>
+  <div class="bar-chart" id="avgBarChart"></div>
+  <div class="legend-row">
+    <div class="legend-item"><span class="dot" style="background:var(--skt)"></span>SKT</div>
+    <div class="legend-item"><span class="dot" style="background:var(--kt)"></span>KT</div>
+    <div class="legend-item"><span class="dot" style="background:var(--lgu)"></span>LG U+</div>
+  </div>
+  <p class="body-text">단순 평균으로는 KT가 세 통신사 중 가장 높게 나타납니다. 다만 KT는 목록 화면에서 <b>추가지원금(유통망지원금)</b>을 공개하지 않아(6번 항목 참고), 공통지원금만으로 "KT가 실제로 가장 저렴하다"고 단정할 수는 없습니다. 추가지원금까지 포함한 합계지원금 기준 비교는 KT에 한해 이번 데이터로 불가능합니다.</p>
+</div>
+</section>
+
+<section>
+<div class="card">
+  <h2><span class="num-badge">3</span>완전일치 vs 불일치</h2>
+  <p class="section-desc">51개 모델 중 3사의 공통지원금이 완전히 같은 경우와 다른 경우를 나눠봤습니다.</p>
+  <div class="stat-row" style="grid-template-columns:1fr 1fr;">
+    <div class="stat-tile" style="border-color:#CFE8C9;">
+      <div class="label">완전일치</div>
+      <div class="value">33건 <span style="font-size:14px; font-weight:600; color:var(--ink-muted);">(65%)</span></div>
+      <div class="foot">3사가 동일한 공통지원금 책정</div>
+    </div>
+    <div class="stat-tile" style="border-color:#EAD3D8;">
+      <div class="label">불일치</div>
+      <div class="value">18건 <span style="font-size:14px; font-weight:600; color:var(--ink-muted);">(35%)</span></div>
+      <div class="foot">그 중 15건이 iPhone 계열</div>
+    </div>
+  </div>
+  <table id="mismatchTable">
+    <thead>
+      <tr><th>모델</th><th>용량</th><th>SKT</th><th>KT</th><th>LG U+</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+</section>
+
+<section>
+<div class="card">
+  <h2><span class="num-badge">4</span>핵심 인사이트 — 제조사별 일치율 차이</h2>
+  <p class="section-desc">가장 뚜렷하고 재현 가능한(수치로 반복 확인되는) 패턴입니다. 3사 모두 비교 가능한 모델을 삼성 갤럭시와 애플 아이폰으로 나눠 완전일치율을 계산했습니다.</p>
+  <div class="match-grid">
+    <div class="match-card">
+      <div class="brand">삼성 갤럭시</div>
+      <div class="ring-wrap"><canvas width="120" height="120" data-pct="89" data-color="#1F2328"></canvas><div class="ring-pct">89%</div></div>
+      <div class="cnt">28건 중 25건 완전일치</div>
+    </div>
+    <div class="match-card">
+      <div class="brand">애플 iPhone</div>
+      <div class="ring-wrap"><canvas width="120" height="120" data-pct="35" data-color="#E4002B"></canvas><div class="ring-pct">35%</div></div>
+      <div class="cnt">23건 중 8건 완전일치</div>
+    </div>
+  </div>
+  <p class="body-text" style="margin-top:20px;">삼성 갤럭시는 3사가 대부분 같은 공통지원금을 책정하는 반면, 아이폰은 통신사마다 금액이 크게 갈립니다.</p>
+  <div class="caveat"><b>이 데이터만으로 확인 가능한 사실은 여기까지입니다.</b> "갤럭시는 3사 지원금 정책이 유사하게 움직이고, 아이폰은 통신사마다 다르게 움직인다"는 상관관계 자체는 데이터로 확인됩니다. 그 이유(제조사 리베이트 정책, 통신사별 마케팅 전략 등)는 이 지원금·요금제 데이터만으로는 확인할 수 없어 <b>모르겠습니다</b> — 원인 규명에는 각 통신사·제조사의 별도 정책 자료 확인이 필요합니다.</div>
+</div>
+</section>
+
+<section>
+<div class="card">
+  <h2><span class="num-badge">5</span>공시일과 출고가·지원금의 관계</h2>
+  <p class="section-desc">iPhone 16 128GB 사례 — 수집된 원본 값 그대로입니다.</p>
+  <div class="callout">
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-carrier tag-skt">SKT</div>
+        <div class="tl-detail">공시일 <b>2025.10.01</b> · 출고가 <b>1,243,000원</b> · 공통지원금 <b>220,000원</b></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-carrier tag-kt">KT</div>
+        <div class="tl-detail">공시일 <b>2026.01.08</b>(약 3개월 뒤) · 출고가 <b>1,023,000원</b>(−220,000원) · 공통지원금 <b>600,000원</b>(+380,000원)</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-carrier tag-lgu">LG U+</div>
+        <div class="tl-detail">공시일 2026-05-29 · 출고가 <b>1,243,000원</b> · 공통지원금 <b>450,000원</b></div>
+      </div>
+    </div>
+  </div>
+  <p class="body-text">관찰된 사실: KT의 공시일이 SKT보다 약 3개월 늦고, 이 시점에 출고가는 더 낮고 공통지원금은 더 높게 나타납니다 — 공시일이 늦을수록 출고가는 낮고 지원금은 높아지는 방향의 상관관계입니다.</p>
+  <div class="caveat">이 상관관계가 발생한 원인은 이 데이터만으로 확인할 수 없어 <b>모르겠습니다</b>. iPhone 16 한 모델(표본 1건)에서만 관찰된 정황이라 다른 모델에도 적용되는 패턴인지 추가 확인이 필요하며, LG U+의 공시일 값 자체의 신뢰도에도 의문이 있어(6번 항목) 3사 공시일을 동일 기준으로 비교하는 데 한계가 있습니다.</div>
+</div>
+</section>
+
+<section>
+<div class="card">
+  <h2><span class="num-badge">6</span>데이터 신뢰도 관련 유의사항</h2>
+  <ul class="clean">
+    <li><b style="color:var(--ink)">LG U+ 공시일자 배치 타임스탬프 의심:</b> 수집된 95건 중 70건(74%)이 "2026-05-29" 한 날짜로 동일하게 표시됩니다. 개별 모델의 실제 공시일이 아니라 데이터가 마지막으로 일괄 갱신된 시점을 나타낼 가능성이 있습니다(확실하지 않음). LG U+의 공시일을 SKT·KT와 같은 의미로 비교하는 데는 주의가 필요합니다.</li>
+    <li><b style="color:var(--ink)">KT 추가지원금 비공개:</b> KT는 목록 화면에서 추가지원금(유통망지원금)을 공개하지 않습니다(주문 단계에서만 확인 가능). KT 다이렉트샵 안내에 따르면 이 추가지원금은 24개월(또는 12개월) 약정 후 일정 기간(5G 180일 / 12개월 약정 90일) 요금제를 유지하면, 이후 요금제를 낮춰도 기준금액(5G 월정액 47,000원 이상 등) 이상이면 차액정산금을 면제해주는 프로그램과 연동되어 있습니다 — 즉 추가지원금 자체가 없는 게 아니라 목록 화면에 금액만 비공개인 것입니다. 이 때문에 KT를 포함한 3사 "합계지원금(공통+추가)" 완전 비교는 구조적으로 불가능합니다.</li>
+  </ul>
+</div>
+</section>
+
+<section>
+<div class="card">
+  <h2><span class="num-badge">7</span>가입유형별 차이가 없는 이유</h2>
+  <p class="body-text">'모델별 지원금 비교' 데이터를 보면 동일 모델·동일 통신사 내에서는 번호이동/기기변경/신규가입 3개 가입유형의 지원금이 모두 동일합니다. 수집 오류가 아니라 3사 사이트를 각 가입유형으로 직접 조회해 실제로 동일함을 확인한 결과입니다.</p>
+  <p class="body-text">「단말기 유통구조 개선에 관한 법률(단통법)」은 이동통신사가 가입유형에 따라 공시지원금을 차등 지급하는 것을 금지하고 있으며, 이번에 관찰된 "가입유형 무관 동일 지원금" 패턴은 이 법령 내용과 부합합니다. 따라서 3사 간 지원금 차이의 원인은 가입유형이 아니라, 통신사별로 서로 다르게 책정하는 지원금 정책 자체에 있다고 볼 수 있습니다.</p>
+</div>
+</section>
+
+<footer>
+  출처: SKT T world 지원금 페이지(shop.tworld.co.kr/notice), KT닷컴 공통지원금 페이지(shop.kt.com/smart/supportAmtList.do), LG U+ 이동사지원금 API(mdlb-sufu-list) · 수집일 2026-08-14 · 이 리포트는 참고용 분석 자료이며 실제 가입 조건은 각 통신사 공식 채널에서 재확인하시기 바랍니다.
+</footer>
+
+<script>
+const AVG = [
+  {name:'SKT', value:406000, color:'#E4002B'},
+  {name:'KT', value:490196, color:'#00968F'},
+  {name:'LG U+', value:454098, color:'#9C0080'},
+];
+const maxAvg = Math.max(...AVG.map(d=>d.value));
+const barChart = document.getElementById('avgBarChart');
+AVG.forEach(d=>{
+  const pct = (d.value/maxAvg*100).toFixed(1);
+  const row = document.createElement('div');
+  row.className = 'bar-row';
+  row.innerHTML = `
+    <div class="bar-label"><span class="dot" style="background:${d.color}"></span>${d.name}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%; background:${d.color};"><span>${d.value.toLocaleString()}원</span></div></div>
+  `;
+  barChart.appendChild(row);
+});
+
+const MISMATCH = [
+  ['iPhone 16','128GB',220000,600000,450000],
+  ['iPhone 16','256GB',220000,600000,450000],
+  ['iPhone 16','512GB',220000,600000,450000],
+  ['iPhone 16 Pro','128GB',220000,600000,450000],
+  ['iPhone 16 Pro','256GB',220000,600000,450000],
+  ['iPhone 16 Pro','512GB',220000,600000,450000],
+  ['iPhone 16 Pro','1TB',220000,600000,450000],
+  ['iPhone 16 Pro Max','256GB',220000,600000,450000],
+  ['iPhone 16 Pro Max','512GB',220000,600000,450000],
+  ['iPhone 16 Pro Max','1TB',220000,600000,450000],
+  ['iPhone 17 Pro Max','256GB',220000,150000,168000],
+  ['iPhone 17 Pro Max','512GB',220000,150000,168000],
+  ['iPhone 17 Pro Max','1TB',220000,150000,168000],
+  ['iPhone 17e','256GB',128000,450000,168000],
+  ['iPhone 17e','512GB',128000,450000,168000],
+  ['갤럭시 A17','128GB',130000,150000,319000],
+  ['갤럭시 S25 엣지','256GB',680000,700000,700000],
+  ['갤럭시 S25 엣지','512GB',680000,700000,700000],
+];
+const tbody = document.querySelector('#mismatchTable tbody');
+MISMATCH.forEach(([name,cap,s,k,l])=>{
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td class="model-name">${name}</td><td>${cap}</td><td class="tag-skt">${s.toLocaleString()}</td><td class="tag-kt">${k.toLocaleString()}</td><td class="tag-lgu">${l.toLocaleString()}</td>`;
+  tbody.appendChild(tr);
+});
+
+// donut rings
+document.querySelectorAll('canvas[data-pct]').forEach(cv=>{
+  const ctx = cv.getContext('2d');
+  const pct = parseFloat(cv.dataset.pct);
+  const color = cv.dataset.color;
+  const cx = 60, cy = 60, r = 48, lw = 12;
+  ctx.lineWidth = lw;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#EFEFEC';
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle = color;
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,-Math.PI/2, -Math.PI/2 + (Math.PI*2*pct/100));
+  ctx.stroke();
+});
+</script>
+</body>
+</html>
